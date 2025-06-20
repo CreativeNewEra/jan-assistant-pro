@@ -2,70 +2,60 @@
 API client for communicating with Jan.ai and other OpenAI-compatible APIs
 """
 
+import asyncio
 import json
 import time
 from typing import Any, Dict, List, Optional
 
-import requests
+import httpx
 
 
-class APIClient:
-    """Client for interacting with OpenAI-compatible APIs"""
-    
+class AsyncAPIClient:
+    """Asynchronous client for interacting with OpenAI-compatible APIs."""
+
     def __init__(self, base_url: str, api_key: str, model: str, timeout: int = 30):
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
-        self.session = requests.Session()
-        
-        # Set up default headers
-        self.session.headers.update({
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {api_key}'
-        })
-    
-    def chat_completion(self, messages: List[Dict[str, str]], 
-                       stream: bool = False, 
-                       temperature: float = 0.7,
-                       max_tokens: Optional[int] = None) -> Dict[str, Any]:
-        """
-        Send a chat completion request
-        
-        Args:
-            messages: List of message dictionaries with 'role' and 'content'
-            stream: Whether to stream the response
-            temperature: Randomness in the response (0.0 to 1.0)
-            max_tokens: Maximum tokens to generate
-        
-        Returns:
-            Response dictionary from the API
-        """
+        self.session = httpx.AsyncClient(timeout=self.timeout)
+        self.session.headers.update(
+            {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+        )
+
+    async def chat_completion(
+        self,
+        messages: List[Dict[str, str]],
+        stream: bool = False,
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None,
+    ) -> Dict[str, Any]:
         url = f"{self.base_url}/chat/completions"
-        
+
         payload = {
             "model": self.model,
             "messages": messages,
             "stream": stream,
-            "temperature": temperature
+            "temperature": temperature,
         }
-        
+
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
-        
+
         try:
-            response = self.session.post(url, json=payload, timeout=self.timeout)
+            response = await self.session.post(url, json=payload)
             response.raise_for_status()
             return response.json()
-        
-        except requests.exceptions.Timeout:
+
+        except httpx.TimeoutException:
             raise APIError("Request timed out")
-        except requests.exceptions.ConnectionError:
+        except httpx.RequestError:
             raise APIError("Could not connect to API server. Is Jan running?")
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
+            response = e.response
             if response.status_code == 400:
-                error_detail = response.json().get('message', 'Unknown error')
-                if 'Engine is not loaded' in error_detail:
+                error_detail = response.json().get("message", "Unknown error")
+                if "Engine is not loaded" in error_detail:
                     raise APIError("Model is not loaded in Jan. Please start your model first.")
                 else:
                     raise APIError(f"Bad request: {error_detail}")
@@ -77,62 +67,115 @@ class APIClient:
                 raise APIError(f"HTTP {response.status_code}: {response.text}")
         except json.JSONDecodeError:
             raise APIError("Invalid JSON response from server")
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - unexpected branch
             raise APIError(f"Unexpected error: {str(e)}")
-    
-    def get_models(self) -> List[Dict[str, Any]]:
-        """Get list of available models"""
+
+    async def get_models(self) -> List[Dict[str, Any]]:
         url = f"{self.base_url}/models"
-        
+
         try:
-            response = self.session.get(url, timeout=self.timeout)
+            response = await self.session.get(url)
             response.raise_for_status()
-            return response.json().get('data', [])
+            return response.json().get("data", [])
         except Exception as e:
             raise APIError(f"Failed to get models: {str(e)}")
-    
-    def health_check(self) -> bool:
-        """Check if the API is healthy"""
+
+    async def health_check(self) -> bool:
         try:
-            # Try a simple request
             test_messages = [{"role": "user", "content": "hi"}]
-            self.chat_completion(test_messages)
+            await self.chat_completion(test_messages)
             return True
         except APIError:
             return False
         except Exception:
             return False
-    
-    def test_connection(self) -> Dict[str, Any]:
-        """Test the connection and return status information"""
+
+    async def test_connection(self) -> Dict[str, Any]:
         status = {
-            'connected': False,
-            'model_loaded': False,
-            'latency_ms': None,
-            'error': None
+            "connected": False,
+            "model_loaded": False,
+            "latency_ms": None,
+            "error": None,
         }
-        
+
         try:
             start_time = time.time()
-            
-            # Test basic connectivity
+
             test_messages = [{"role": "user", "content": "ping"}]
-            response = self.chat_completion(test_messages)
-            
+            await self.chat_completion(test_messages)
+
             end_time = time.time()
-            status['latency_ms'] = round((end_time - start_time) * 1000, 2)
-            status['connected'] = True
-            status['model_loaded'] = True
-            
+            status["latency_ms"] = round((end_time - start_time) * 1000, 2)
+            status["connected"] = True
+            status["model_loaded"] = True
+
         except APIError as e:
-            status['error'] = str(e)
+            status["error"] = str(e)
             if "not loaded" in str(e).lower():
-                status['connected'] = True  # API is reachable but model not loaded
-            
+                status["connected"] = True
+
         except Exception as e:
-            status['error'] = f"Connection failed: {str(e)}"
-        
+            status["error"] = f"Connection failed: {str(e)}"
+
         return status
+
+    async def close(self) -> None:
+        await self.session.aclose()
+
+
+class APIClient:
+    """Synchronous wrapper around :class:`AsyncAPIClient`."""
+
+    def __init__(self, base_url: str, api_key: str, model: str, timeout: int = 30):
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
+        self.model = model
+        self.timeout = timeout
+
+        self._async_client = AsyncAPIClient(
+            base_url=base_url, api_key=api_key, model=model, timeout=timeout
+        )
+
+    def _run(self, coro):
+        try:
+            return asyncio.run(coro)
+        except RuntimeError:
+            loop = asyncio.get_event_loop()
+            return loop.run_until_complete(coro)
+
+    def close(self) -> None:
+        """Close the underlying asynchronous client."""
+        self._run(self._async_client.close())
+    
+    def chat_completion(
+        self,
+        messages: List[Dict[str, str]],
+        stream: bool = False,
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Synchronously send a chat completion request."""
+
+        return self._run(
+            self._async_client.chat_completion(
+                messages,
+                stream=stream,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+        )
+    
+    def get_models(self) -> List[Dict[str, Any]]:
+        """Synchronously fetch available models."""
+        return self._run(self._async_client.get_models())
+    
+    def health_check(self) -> bool:
+        """Synchronously check API health."""
+        return self._run(self._async_client.health_check())
+    
+    def test_connection(self) -> Dict[str, Any]:
+        """Synchronously test the connection and return status information."""
+        return self._run(self._async_client.test_connection())
     
     def extract_content(self, response: Dict[str, Any]) -> str:
         """
