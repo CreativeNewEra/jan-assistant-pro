@@ -38,10 +38,25 @@ setup(
     install_requires=requirements,
     extras_require={
         "dev": [
-            "pytest>=6.0",
-            "black>=21.0",
-            "flake8>=3.8",
-            "mypy>=0.800",
+            "pytest>=7.0.0",
+            "pytest-cov>=4.0.0",
+            "pytest-mock>=3.10.0",
+            "pytest-watch>=4.2.0",
+            "black>=23.0.0",
+            "isort>=5.12.0",
+            "flake8>=6.0.0",
+            "mypy>=1.0.0",
+            "pre-commit>=3.0.0",
+            "bandit>=1.7.0",
+            "safety>=2.3.0",
+            "sphinx>=6.0.0",
+            "sphinx-rtd-theme>=1.2.0",
+            "build>=0.10.0",
+            "twine>=4.0.0",
+            "ipdb>=0.13.0",
+            "rich>=13.0.0",  # For better console output
+            "py-spy>=0.3.0",
+            "memory-profiler>=0.60.0",
         ],
         "system": [
             "psutil>=5.8.0",  # For system monitoring
