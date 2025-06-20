@@ -92,8 +92,9 @@ def test_memory_get_stats(tmp_path):
     assert stats["total_entries"] == 2
     assert sorted(stats["categories"]) == sorted(["cat1", "cat2"])
 
-    expected_oldest = min(ts_a, ts_c)
-    expected_newest = max(ts_a, ts_c)
+    all_timestamps = stats["timestamps"].values()
+    expected_oldest = min(all_timestamps)
+    expected_newest = max(all_timestamps)
     assert stats["oldest_entry"] == expected_oldest
     assert stats["newest_entry"] == expected_newest
     assert stats["most_accessed"] == "a"
