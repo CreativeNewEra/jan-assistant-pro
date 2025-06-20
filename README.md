@@ -4,9 +4,7 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A powerful, local-first AI assistant with tools that **work** with Jan.ai…
-
-![Jan Assistant Pro Screenshot](assets/screenshot.png)
+A powerful, local-first AI assistant with tools that **work** with Jan.ai.
 
 ## 🚀 Features
 
