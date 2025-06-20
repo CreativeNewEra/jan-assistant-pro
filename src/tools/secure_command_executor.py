@@ -49,7 +49,7 @@ class SecureCommandExecutor:
             return f"Command '{base}' is blocked"
         if base not in self.allowed_commands:
             return f"Command '{base}' is not allowed"
-        if re.search(r"&&|;|`|\$\(", command):
+        if re.search(r"&&|;|`|\$\(|\|", command):
             return "Command contains dangerous patterns"
         args = shlex.split(command)
         for arg in args[1:]:
