@@ -7,6 +7,9 @@ import os
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 import threading
+import sqlite3
+from pathlib import Path
+from contextlib import contextmanager
 
 
 class MemoryManager:
@@ -328,3 +331,144 @@ class MemoryManager:
         except Exception as e:
             print(f"Error importing memories: {e}")
             return False
+
+
+class EnhancedMemoryManager:
+    """SQLite-backed memory manager for better performance and reliability"""
+
+    def __init__(self, db_path: str, max_entries: int = 1000):
+        self.db_path = Path(db_path)
+        self.max_entries = max_entries
+        self._lock = threading.RLock()
+        self._init_db()
+
+    def _init_db(self):
+        """Initialize SQLite database"""
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS memories (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    category TEXT DEFAULT 'general',
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    access_count INTEGER DEFAULT 0,
+                    last_accessed DATETIME
+                )
+                """
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_category ON memories(category)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_timestamp ON memories(timestamp)"
+            )
+
+    @contextmanager
+    def _get_connection(self):
+        """Thread-safe database connection"""
+        with self._lock:
+            conn = sqlite3.connect(self.db_path, timeout=30.0)
+            conn.row_factory = sqlite3.Row
+            try:
+                yield conn
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            finally:
+                conn.close()
+
+    def remember(self, key: str, value: str, category: str = "general") -> bool:
+        """Store a memory with automatic cleanup"""
+        try:
+            with self._get_connection() as conn:
+                count = conn.execute("SELECT COUNT(*) FROM memories").fetchone()[
+                    0
+                ]
+                if count >= self.max_entries:
+                    cleanup_count = max(1, self.max_entries // 10)
+                    conn.execute(
+                        """
+                        DELETE FROM memories
+                        WHERE key IN (
+                            SELECT key FROM memories
+                            ORDER BY timestamp ASC
+                            LIMIT ?
+                        )
+                        """,
+                        (cleanup_count,),
+                    )
+
+                conn.execute(
+                    """
+                    INSERT OR REPLACE INTO memories (key, value, category, timestamp, access_count)
+                    VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)
+                    """,
+                    (key, value, category),
+                )
+
+            return True
+        except Exception as e:
+            print(f"Error storing memory: {e}")
+            return False
+
+    def recall(self, key: str) -> Optional[Dict[str, Any]]:
+        """Retrieve and update access statistics"""
+        try:
+            with self._get_connection() as conn:
+                row = conn.execute(
+                    """SELECT * FROM memories WHERE key = ?""",
+                    (key,),
+                ).fetchone()
+
+                if row:
+                    conn.execute(
+                        """
+                        UPDATE memories
+                        SET access_count = access_count + 1,
+                            last_accessed = CURRENT_TIMESTAMP
+                        WHERE key = ?
+                        """,
+                        (key,),
+                    )
+
+                    return dict(row)
+
+            return None
+        except Exception as e:
+            print(f"Error recalling memory: {e}")
+            return None
+
+    def fuzzy_search(self, search_term: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Full-text search across keys and values"""
+        try:
+            with self._get_connection() as conn:
+                rows = conn.execute(
+                    """
+                    SELECT * FROM memories
+                    WHERE key LIKE ? OR value LIKE ?
+                    ORDER BY
+                        CASE WHEN key = ? THEN 1
+                             WHEN key LIKE ? THEN 2
+                             ELSE 3 END,
+                        access_count DESC,
+                        timestamp DESC
+                    LIMIT ?
+                    """,
+                    (
+                        f"%{search_term}%",
+                        f"%{search_term}%",
+                        search_term,
+                        f"{search_term}%",
+                        limit,
+                    ),
+                ).fetchall()
+
+                return [dict(row) for row in rows]
+        except Exception as e:
+            print(f"Error searching memories: {e}")
+            return []
+
