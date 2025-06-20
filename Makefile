@@ -1,4 +1,4 @@
-.PHONY: install test lint format clean run
+.PHONY: install test lint format clean run test-coverage test-watch format-check security run-debug build pre-commit-install pre-commit-run
 
 # Development setup
 install:
