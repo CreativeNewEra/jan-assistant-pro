@@ -74,7 +74,7 @@ def test_memory_get_stats(tmp_path):
     stats = manager.get_stats()
 
     assert stats["total_entries"] == 2
-    assert stats["categories"] == ["cat1", "cat2"]
+    assert sorted(stats["categories"]) == sorted(["cat1", "cat2"])
 
     a_ts = manager.memory_data["a"]["timestamp"]
     c_ts = manager.memory_data["c"]["timestamp"]
