@@ -3,21 +3,29 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Tests](https://img.shields.io/badge/tests-comprehensive-green.svg)](#testing)
 
-A powerful, local-first AI assistant with tools that **work** with Jan.ai.
+A **professional-grade**, local-first AI assistant with enterprise-ready architecture and extensible tool system that **works** with Jan.ai.
 
 ## 🚀 Features
 
+### Core Capabilities
 - 📁 **File Operations**: Read, write, list, copy, and delete files with security controls
 - 🧠 **Persistent Memory**: Remember information between sessions with fuzzy search
- - 💻 **System Commands**: Execute terminal commands safely with configurable permissions
- - 🌐 **Network Connectivity**: Verify connection status using a ping check (requires `ping` to be allowed)
+- 💻 **System Commands**: Execute terminal commands safely with configurable permissions
+- 🌐 **Network Connectivity**: Verify connection status using a ping check
 - 🎨 **Beautiful GUI**: Dark theme with intuitive interface and status indicators
 - ⚡ **Multi-threading**: Responsive, non-blocking interface
-- 🔧 **Tool System**: Extensible framework for adding new capabilities
+
+### Enterprise Features ✨ **NEW**
+- 🏗️ **Dynamic Tool Registry**: Hot-loadable tool system with automatic validation
+- 🛡️ **Structured Error Handling**: Rich error context and debugging information
+- 📊 **Advanced Logging**: Production-ready logging with JSON support and audit trails
+- ✅ **Configuration Validation**: Schema-based config validation with auto-documentation
+- 🧪 **Comprehensive Testing**: Full test suite with high coverage and CI/CD ready
+- 🔧 **Professional Architecture**: Clean MVC separation with extensible design
 - 🔒 **Privacy First**: Everything runs locally, your data stays yours
-- ⚙️ **Configurable**: JSON-based configuration for all settings
-- 🏗️ **Modular Architecture**: Clean, extensible codebase for developers
+- ⚙️ **Enterprise Configuration**: Validated JSON configuration with rich schemas
 
 ## 📸 Screenshots
 
@@ -156,79 +164,138 @@ check system information
 get current directory
 ```
 
-## 🏗️ Architecture
+## 🏗️ Enterprise Architecture
 
 ### Project Structure
 
 ```
 jan-assistant-pro/
-├── main.py                 # Application entry point
-├── examples/               # Example GUI scripts
-│   └── jan_gui_fixed.py    # Advanced GUI example
+├── main.py                          # Application entry point
 ├── src/
-│   ├── core/
-│   │   ├── config.py       # Configuration management
-│   │   ├── api_client.py   # API communication
-│   │   └── memory.py       # Memory management
+│   ├── core/                        # Core application logic
+│   │   ├── app_controller.py        # ✨ NEW: Application controller (MVC)
+│   │   ├── config.py                # Configuration management
+│   │   ├── config_validator.py      # ✨ NEW: Schema validation
+│   │   ├── exceptions.py            # ✨ NEW: Structured error handling
+│   │   ├── logging_config.py        # ✨ NEW: Advanced logging system
+│   │   ├── api_client.py            # API communication
+│   │   └── memory.py                # Memory management
 │   ├── gui/
-│   │   └── main_window.py  # Main GUI interface
-│   └── tools/
-│       ├── file_tools.py   # File operations
-│       └── system_tools.py # System commands
+│   │   └── main_window.py           # 🔄 REFACTORED: Clean UI layer
+│   └── tools/                       # ✨ NEW: Dynamic tool system
+│       ├── base_tool.py             # ✨ NEW: Tool interface
+│       ├── tool_registry.py         # ✨ NEW: Dynamic registry
+│       ├── file_tools.py            # File operations
+│       └── system_tools.py          # System commands
+├── tests/                           # ✨ NEW: Comprehensive test suite
+│   ├── test_enhanced_features.py    # ✨ NEW: Integration tests
+│   ├── test_api_client.py          # API client tests
+│   ├── test_file_tools.py          # File tools tests
+│   ├── test_memory_manager.py      # Memory tests
+│   └── test_system_tools.py        # System tools tests
 ├── config/
-│   ├── config.example.json # Example configuration
-│   └── config.json         # User configuration
-├── tests/                  # Test suite
-└── docs/                   # Documentation
+│   ├── config.example.json         # Example configuration
+│   └── config.json                 # User configuration
+└── docs/                           # Documentation
+    ├── REFACTORING_SUMMARY.md      # ✨ NEW: Architecture changes
+    └── HIGH_IMPACT_IMPROVEMENTS_SUMMARY.md  # ✨ NEW: Enhancement guide
 ```
 
-### Core Components
+### Enterprise Components
 
-- **Config Manager**: JSON-based configuration with dot notation access
-- **API Client**: Robust OpenAI-compatible API client with error handling
-- **Memory Manager**: Persistent storage with fuzzy search capabilities
-- **Tool System**: Modular architecture for extensible functionality
-- **GUI Framework**: Professional interface with threading support
+- **🏛️ MVC Architecture**: Clean separation between View, Controller, and Model layers
+- **🔧 Dynamic Tool Registry**: Automatic tool discovery, validation, and execution
+- **⚡ App Controller**: Centralized business logic with clean API
+- **🛡️ Exception Hierarchy**: Structured error handling with rich context
+- **📊 Advanced Logging**: JSON logging, rotation, audit trails, and performance monitoring
+- **✅ Config Validation**: Schema-based validation with auto-generated documentation
+- **🧪 Testing Framework**: Comprehensive test suite with mocks and integration tests
+- **🔒 Security Layer**: Input validation, path restrictions, and audit logging
+- **📚 Auto Documentation**: Self-documenting tools and configuration schemas
 
 ## 🔧 Development
 
-### Adding New Tools
+### Adding New Tools (Simplified) ✨
 
-1. **Create tool class** in `src/tools/`:
-   ```python
-   class NewTool:
-       def __init__(self, config_param):
-           self.config_param = config_param
-       
-       def tool_method(self, input_param):
-           return {"success": True, "result": "Tool output"}
-   ```
+The new dynamic tool registry makes adding tools incredibly simple:
 
-2. **Add to main window**:
+1. **Create your tool class** inheriting from `BaseTool`:
    ```python
-   # In __init__
-   self.new_tool = NewTool(config.get('new_tool.setting'))
+   from tools.base_tool import BaseTool, ToolInfo, ToolParameter
    
-   # In handle_tool_call
-   elif "TOOL_NEW_OPERATION:" in response:
-       result = self.new_tool.tool_method(param)
-       return self._format_tool_result(result)
+   class WeatherTool(BaseTool):
+       def get_tool_info(self) -> ToolInfo:
+           return ToolInfo(
+               name="weather",
+               description="Get weather information for a city",
+               category="utilities",
+               parameters=[
+                   ToolParameter("city", "City name", str, required=True),
+                   ToolParameter("units", "Temperature units", str, 
+                               required=False, default="celsius")
+               ],
+               examples=["Get weather for Tokyo", "Check weather in Paris"]
+           )
+       
+       def execute(self, **kwargs) -> Dict[str, Any]:
+           city = kwargs['city']
+           units = kwargs.get('units', 'celsius')
+           
+           # Your weather API logic here
+           weather_data = get_weather(city, units)
+           
+           return self._create_success_response(weather_data)
    ```
 
-3. **Update system message** with new tool syntax
+2. **Register the tool** (automatic with registry):
+   ```python
+   from tools.tool_registry import register_tool
+   
+   # Registration is this simple!
+   register_tool(WeatherTool)
+   ```
 
-### Running Tests
+**That's it!** Your tool now has:
+- ✅ Automatic parameter validation
+- ✅ Built-in help generation
+- ✅ Error handling and logging
+- ✅ Integration with the UI
+- ✅ No manual string parsing needed
+
+### Legacy Tool Migration
+
+Existing tools can be easily migrated to the new system. See `docs/REFACTORING_SUMMARY.md` for migration guides.
+
+### Testing ✨
+
+Our comprehensive testing framework ensures code quality:
 
 ```bash
 # Run all tests
-python -m pytest tests/
+python -m pytest tests/ -v
 
-# Run with coverage
-python -m pytest tests/ --cov=src/
+# Run with coverage report
+python -m pytest tests/ --cov=src/ --cov-report=html
 
-# Run specific test
-python -m pytest tests/test_memory_manager.py -v
+# Run specific test suites
+python -m pytest tests/test_enhanced_features.py -v     # New features
+python -m pytest tests/test_memory_manager.py -v       # Memory system
+python -m pytest tests/test_file_tools.py -v          # File operations
+
+# Run performance tests
+python -m pytest tests/ -k "performance" -v
+
+# Generate coverage report
+coverage html  # Creates htmlcov/ directory
 ```
+
+**Test Coverage:**
+- 🧪 **Unit Tests**: Individual component testing
+- 🔗 **Integration Tests**: Cross-component interaction testing  
+- 🎭 **Mock Testing**: External dependency isolation
+- 🏗️ **Architecture Tests**: Design pattern validation
+- 🚨 **Error Testing**: Exception handling verification
+- ⚡ **Performance Tests**: Speed and memory benchmarks
 
 ### Code Style
 
@@ -258,9 +325,33 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ### Development Roadmap
 
-- [ ] **v0.2.0**: Web search, calendar integration, email tools
-- [ ] **v0.3.0**: Voice interface, web dashboard, plugin system
-- [ ] **v0.4.0**: Multi-user support, collaboration features
+#### ✅ **v0.2.0 - Enterprise Foundation (COMPLETED)**
+- [x] **Dynamic Tool Registry**: Hot-loadable tool system
+- [x] **Structured Error Handling**: Rich error context and debugging
+- [x] **Advanced Logging**: Production-ready logging infrastructure
+- [x] **Configuration Validation**: Schema-based validation
+- [x] **Comprehensive Testing**: Full test suite with high coverage
+- [x] **MVC Architecture**: Clean separation of concerns
+
+#### 🚧 **v0.3.0 - Plugin Ecosystem (In Progress)**
+- [ ] **Plugin System**: Third-party tool plugins with hot-loading
+- [ ] **Tool Marketplace**: Community tool sharing and installation
+- [ ] **Web Search Tools**: Internet search and web scraping capabilities
+- [ ] **Calendar Integration**: Schedule management and reminders
+- [ ] **Email Tools**: Email composition and management
+
+#### 🔮 **v0.4.0 - Advanced Features (Planned)**
+- [ ] **Voice Interface**: Speech recognition and text-to-speech
+- [ ] **Web Dashboard**: Browser-based interface with REST API
+- [ ] **Multi-User Support**: User profiles and collaboration features
+- [ ] **Advanced Analytics**: Usage statistics and performance monitoring
+- [ ] **Cloud Integration**: Deploy as a service with horizontal scaling
+
+#### 🌟 **v0.5.0 - AI Enhancement (Future)**
+- [ ] **Model Fine-tuning**: Custom model training for specific tasks
+- [ ] **Intelligent Automation**: AI-driven workflow automation
+- [ ] **Advanced Memory**: Vector embeddings and semantic search
+- [ ] **Multi-Modal Support**: Image, audio, and video processing
 
 ## 🐛 Troubleshooting
 
