@@ -9,11 +9,9 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from typing import Any, Dict
 
-from core.app_controller import AppController
-
-# Import our core modules
-from core.config import Config
-from gui.enhanced_widgets import ChatInput, EnhancedChatDisplay, StatusBar
+from src.core.app_controller import AppController
+from src.core.config import Config
+from src.gui.enhanced_widgets import ChatInput, EnhancedChatDisplay, StatusBar
 
 
 class JanAssistantGUI:

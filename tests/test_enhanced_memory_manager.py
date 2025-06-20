@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from core.memory import EnhancedMemoryManager
+from src.core.memory import EnhancedMemoryManager
 
 
 def test_sqlite_persistence(tmp_path):

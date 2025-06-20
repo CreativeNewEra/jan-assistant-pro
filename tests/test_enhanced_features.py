@@ -5,23 +5,20 @@ Tests the new tool registry, error handling, and configuration validation
 
 import json
 import os
-
-# Import the modules we're testing
 import sys
 import tempfile
-import unittest
 from typing import Any, Dict
-from unittest.mock import MagicMock, Mock, patch
+import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from core.config_validator import (
+from src.core.config_validator import (
     ConfigSchema,
     ConfigValidator,
     ValidationRule,
     create_jan_assistant_schema,
 )
-from core.exceptions import (
+from src.core.exceptions import (
     APIError,
     ConfigurationError,
     JanAssistantError,
@@ -29,8 +26,8 @@ from core.exceptions import (
     ValidationError,
     handle_exception,
 )
-from tools.base_tool import BaseTool, ToolInfo, ToolParameter
-from tools.tool_registry import ToolRegistry, ToolRegistryError
+from src.tools.base_tool import BaseTool, ToolInfo, ToolParameter
+from src.tools.tool_registry import ToolRegistry, ToolRegistryError
 
 
 class MockTool(BaseTool):

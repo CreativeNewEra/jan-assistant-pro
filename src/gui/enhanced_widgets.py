@@ -1,7 +1,7 @@
 """GUI widget enhancements for Jan Assistant Pro."""
 
-import tkinter as tk
 from datetime import datetime
+import tkinter as tk
 from tkinter import ttk
 
 

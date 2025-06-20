@@ -6,9 +6,9 @@ from typing import Any, Optional
 
 from dotenv import load_dotenv
 
-ENV_PREFIX = "JAN_ASSISTANT_"
+from src.core.config import Config
 
-from .config import Config
+ENV_PREFIX = "JAN_ASSISTANT_"
 
 
 class EnhancedConfig(Config):

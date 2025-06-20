@@ -1,11 +1,12 @@
-import tkinter as tk
-from tkinter import messagebox, filedialog
-import requests
+from datetime import datetime
 import json
 import os
 import subprocess
-from datetime import datetime
 import threading
+import tkinter as tk
+from tkinter import messagebox, filedialog
+
+import requests
 
 class JanAssistantGUI:
     def __init__(self):

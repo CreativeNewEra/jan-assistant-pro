@@ -1,10 +1,9 @@
 import os
 import sys
-import tempfile
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from core.memory import MemoryManager
+from src.core.memory import MemoryManager
 
 
 def test_memory_persistence(tmp_path):

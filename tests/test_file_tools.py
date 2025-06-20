@@ -1,5 +1,3 @@
-import os
-
 from src.tools.file_tools import FileTools
 
 
