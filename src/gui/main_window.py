@@ -3,16 +3,17 @@ Main GUI window for Jan Assistant Pro
 Refactored from the original working implementation
 """
 
-import tkinter as tk
-from tkinter import messagebox, filedialog
-import threading
 import queue
-from typing import Dict, Any
+import threading
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from typing import Any, Dict
+
+from core.app_controller import AppController
 
 # Import our core modules
 from core.config import Config
-from core.app_controller import AppController
-from gui.enhanced_widgets import StatusBar, ChatInput, EnhancedChatDisplay
+from gui.enhanced_widgets import ChatInput, EnhancedChatDisplay, StatusBar
 
 
 class JanAssistantGUI:

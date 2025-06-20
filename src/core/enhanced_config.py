@@ -2,8 +2,9 @@
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 from typing import Any, Optional
+
+from dotenv import load_dotenv
 
 ENV_PREFIX = "JAN_ASSISTANT_"
 

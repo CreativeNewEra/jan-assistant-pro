@@ -2,10 +2,11 @@
 API client for communicating with Jan.ai and other OpenAI-compatible APIs
 """
 
-import requests
 import json
-from typing import List, Dict, Any, Optional
 import time
+from typing import Any, Dict, List, Optional
+
+import requests
 
 
 class APIClient:

@@ -3,7 +3,7 @@ Custom exception classes for Jan Assistant Pro
 Provides structured error handling throughout the application
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 class JanAssistantError(Exception):

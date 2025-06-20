@@ -4,12 +4,12 @@ Memory management system for Jan Assistant Pro
 
 import json
 import os
-from datetime import datetime
-from typing import Dict, Any, List, Optional, Tuple
-import threading
 import sqlite3
-from pathlib import Path
+import threading
 from contextlib import contextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class MemoryManager:

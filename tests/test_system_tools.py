@@ -1,6 +1,7 @@
 from unittest.mock import patch
-from src.tools.system_tools import SystemTools
+
 from src.core.config import Config
+from src.tools.system_tools import SystemTools
 
 
 def test_check_network_connectivity_success():

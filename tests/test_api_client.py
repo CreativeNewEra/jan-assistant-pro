@@ -1,7 +1,7 @@
 from unittest.mock import Mock, patch
-import requests
 
 import pytest
+import requests
 
 from src.core.api_client import APIClient, APIError
 

@@ -5,6 +5,7 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 import tkinter as tk
+
 from gui.enhanced_widgets import ChatInput, StatusBar
 
 
