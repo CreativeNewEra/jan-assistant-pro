@@ -73,7 +73,7 @@ class Config:
                 "web_search": False
             },
             "security": {
-                "allowed_commands": ["ls", "pwd", "cat", "echo", "python3", "python"],
+                "allowed_commands": ["ls", "pwd", "cat", "echo", "python3", "python", "ping"],
                 "restricted_paths": ["/etc", "/sys", "/proc"],
                 "max_file_size": "10MB"
             }
