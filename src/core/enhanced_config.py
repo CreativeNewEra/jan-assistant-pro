@@ -14,11 +14,11 @@ class EnhancedConfig(Config):
     def __init__(self, config_path: Optional[str] = None, env_file: Optional[str] = None):
         # Load environment variables
         if env_file:
-            load_dotenv(env_file)
+            load_dotenv(env_file, override=True)
         else:
             env_path = Path(__file__).parent.parent / ".env"
             if env_path.exists():
-                load_dotenv(env_path)
+                load_dotenv(env_path, override=True)
         super().__init__(config_path=config_path)
 
     def get(self, key_path: str, default: Any = None):
