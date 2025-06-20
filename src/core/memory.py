@@ -245,22 +245,24 @@ class MemoryManager:
                 return {
                     'total_entries': 0,
                     'categories': [],
+                    'timestamps': {},
                     'oldest_entry': None,
                     'newest_entry': None,
                     'most_accessed': None
                 }
-            
-            timestamps = [m.get('timestamp', '') for m in self.memory_data.values()]
-            access_counts = [(k, m.get('access_count', 0)) for k, m in self.memory_data.items()]
-            
-            most_accessed = max(access_counts, key=lambda x: x[1]) if access_counts else None
-            
+
+            timestamps = {k: m.get('timestamp', '') for k, m in self.memory_data.items()}
+            access_counts = {k: m.get('access_count', 0) for k, m in self.memory_data.items()}
+
+            most_accessed_key = max(access_counts, key=access_counts.get) if access_counts else None
+
             return {
                 'total_entries': len(self.memory_data),
                 'categories': self.get_categories(),
-                'oldest_entry': min(timestamps) if timestamps else None,
-                'newest_entry': max(timestamps) if timestamps else None,
-                'most_accessed': most_accessed[0] if most_accessed and most_accessed[1] > 0 else None
+                'timestamps': timestamps,
+                'oldest_entry': min(timestamps.values()) if timestamps else None,
+                'newest_entry': max(timestamps.values()) if timestamps else None,
+                'most_accessed': most_accessed_key if most_accessed_key and access_counts[most_accessed_key] > 0 else None
             }
     
     def clear_all(self) -> bool:

@@ -557,7 +557,7 @@ After using a tool, I'll give you the result and you can respond normally to the
     def test_api(self):
         """Test API connection"""
         def test():
-            self.update_status("🔄 Testing API...", "#ffff00")
+            self.root.after(0, lambda: self.update_status("🔄 Testing API...", "#ffff00"))
             status = self.api_client.test_connection()
             
             if status['connected']:
