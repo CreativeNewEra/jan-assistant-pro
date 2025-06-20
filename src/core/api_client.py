@@ -18,10 +18,29 @@ class AsyncAPIClient:
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
-        self.session = httpx.AsyncClient(timeout=self.timeout)
-        self.session.headers.update(
-            {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+        self.session: Optional[httpx.AsyncClient] = None
+
+    def _create_session(self) -> httpx.AsyncClient:
+        client = httpx.AsyncClient(timeout=self.timeout)
+        client.headers.update(
+            {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}
         )
+        return client
+
+    async def __aenter__(self) -> "AsyncAPIClient":
+        if self.session is None or self.session.is_closed:
+            self.session = self._create_session()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        if self.session and not self.session.is_closed:
+            await self.session.aclose()
+        self.session = None
+
+    async def _ensure_session(self) -> httpx.AsyncClient:
+        if self.session is None or self.session.is_closed:
+            self.session = self._create_session()
+        return self.session
 
     async def chat_completion(
         self,
@@ -42,8 +61,9 @@ class AsyncAPIClient:
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
 
+        session = await self._ensure_session()
         try:
-            response = await self.session.post(url, json=payload)
+            response = await session.post(url, json=payload)
             response.raise_for_status()
             return response.json()
 
@@ -73,8 +93,9 @@ class AsyncAPIClient:
     async def get_models(self) -> List[Dict[str, Any]]:
         url = f"{self.base_url}/models"
 
+        session = await self._ensure_session()
         try:
-            response = await self.session.get(url)
+            response = await session.get(url)
             response.raise_for_status()
             return response.json().get("data", [])
         except Exception as e:
@@ -120,7 +141,9 @@ class AsyncAPIClient:
         return status
 
     async def close(self) -> None:
-        await self.session.aclose()
+        if self.session and not self.session.is_closed:
+            await self.session.aclose()
+        self.session = None
 
 
 class APIClient:
@@ -135,6 +158,13 @@ class APIClient:
         self._async_client = AsyncAPIClient(
             base_url=base_url, api_key=api_key, model=model, timeout=timeout
         )
+
+    def __enter__(self) -> "APIClient":
+        self._run(self._async_client.__aenter__())
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self._run(self._async_client.__aexit__(exc_type, exc, tb))
 
     def _run(self, coro):
         try:
