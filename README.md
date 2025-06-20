@@ -16,6 +16,10 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 - 🌐 **Network Connectivity**: Verify connection status using a ping check
 - 🎨 **Beautiful GUI**: Dark theme with intuitive interface and status indicators
 - ⚡ **Multi-threading**: Responsive, non-blocking interface
+- ⏳ **Progress Bar**: See request progress at a glance
+- 🔵 **Connection Indicator**: Real-time API status with latency
+- ⬆️⬇️ **History Navigation**: Cycle through previous prompts
+- ✨ **Autocomplete**: Suggestions while typing commands
 
 ### Enterprise Features ✨ **NEW**
 - 🏗️ **Dynamic Tool Registry**: Hot-loadable tool system with automatic validation
@@ -32,6 +36,10 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 | Main Interface | Memory Manager | Settings |
 |---|---|---|
 | ![Main](assets/main-interface.png) | ![Memory](assets/memory-manager.png) | ![Settings](assets/settings.png) |
+
+The main view shows a progress bar at the top-right and a colored connection indicator
+next to the send button. Use the up/down arrow keys to navigate your message history,
+and enjoy inline autocomplete suggestions while typing.
 
 ## 📋 Requirements
 
@@ -175,6 +183,7 @@ jan-assistant-pro/
 │   ├── core/                        # Core application logic
 │   │   ├── app_controller.py        # ✨ NEW: Application controller (MVC)
 │   │   ├── config.py                # Configuration management
+│   │   ├── enhanced_config.py       # ✨ NEW: Env-based config
 │   │   ├── config_validator.py      # ✨ NEW: Schema validation
 │   │   ├── exceptions.py            # ✨ NEW: Structured error handling
 │   │   ├── logging_config.py        # ✨ NEW: Advanced logging system
