@@ -3,13 +3,14 @@ Logging configuration for Jan Assistant Pro
 Provides structured logging with multiple outputs and levels
 """
 
+import json
 import logging
 import logging.handlers
 import os
 import sys
-from typing import Optional, Dict, Any
 from datetime import datetime
-import json
+from typing import Any, Dict, Optional
+
 
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured logging"""

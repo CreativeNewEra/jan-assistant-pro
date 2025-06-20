@@ -4,7 +4,7 @@ Configuration management for Jan Assistant Pro
 
 import json
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class Config:

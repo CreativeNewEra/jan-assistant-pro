@@ -2,11 +2,11 @@
 System command tools for Jan Assistant Pro
 """
 
-import subprocess
-import shlex
 import os
-from typing import List, Dict, Any, Optional
 import platform
+import shlex
+import subprocess
+from typing import Any, Dict, List, Optional
 
 
 class SystemTools:

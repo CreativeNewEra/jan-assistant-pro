@@ -3,27 +3,35 @@ Comprehensive tests for enhanced Jan Assistant Pro features
 Tests the new tool registry, error handling, and configuration validation
 """
 
-import unittest
-import tempfile
 import json
 import os
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
 
 # Import the modules we're testing
 import sys
+import tempfile
+import unittest
+from typing import Any, Dict
+from unittest.mock import MagicMock, Mock, patch
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
+from core.config_validator import (
+    ConfigSchema,
+    ConfigValidator,
+    ValidationRule,
+    create_jan_assistant_schema,
+)
+from core.exceptions import (
+    APIError,
+    ConfigurationError,
+    JanAssistantError,
+    ToolError,
+    ValidationError,
+    handle_exception,
+)
 from tools.base_tool import BaseTool, ToolInfo, ToolParameter
 from tools.tool_registry import ToolRegistry, ToolRegistryError
-from core.exceptions import (
-    JanAssistantError, ConfigurationError, APIError, 
-    ToolError, ValidationError, handle_exception
-)
-from core.config_validator import (
-    ConfigValidator, ConfigSchema, ValidationRule, 
-    create_jan_assistant_schema
-)
+
 
 class MockTool(BaseTool):
     """Mock tool for testing purposes"""
