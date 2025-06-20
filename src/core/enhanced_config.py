@@ -5,6 +5,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from typing import Any, Optional
 
+ENV_PREFIX = "JAN_ASSISTANT_"
+
 from .config import Config
 
 
