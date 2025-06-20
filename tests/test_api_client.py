@@ -22,6 +22,7 @@ def test_chat_completion_success():
     with patch.object(client.session, "post", return_value=mock_response) as post:
         response = client.chat_completion(messages)
         post.assert_called_once()
+        mock_response.raise_for_status.assert_called_once()
     assert response["choices"][0]["message"]["content"] == "hello"
     assert client.extract_content(response) == "hello"
 
