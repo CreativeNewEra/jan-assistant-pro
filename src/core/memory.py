@@ -250,16 +250,17 @@ class MemoryManager:
                     'most_accessed': None
                 }
             
-            timestamps = [m.get('timestamp', '') for m in self.memory_data.values()]
+            timestamps = {k: m.get('timestamp', '') for k, m in self.memory_data.items()}
             access_counts = [(k, m.get('access_count', 0)) for k, m in self.memory_data.items()]
-            
+
             most_accessed = max(access_counts, key=lambda x: x[1]) if access_counts else None
-            
+
             return {
                 'total_entries': len(self.memory_data),
                 'categories': self.get_categories(),
-                'oldest_entry': min(timestamps) if timestamps else None,
-                'newest_entry': max(timestamps) if timestamps else None,
+                'timestamps': timestamps,
+                'oldest_entry': min(timestamps.values()) if timestamps else None,
+                'newest_entry': max(timestamps.values()) if timestamps else None,
                 'most_accessed': most_accessed[0] if most_accessed and most_accessed[1] > 0 else None
             }
     

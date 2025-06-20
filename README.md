@@ -87,7 +87,8 @@ python -m pytest tests/
 
 ## ⚙️ Configuration
 
-Edit `config/config.json` to customize settings:
+Edit `config/config.json` to customize settings. The snippet below shows the
+default values from `src/core/config.py`, which you can customize:
 
 ```json
 {
@@ -105,8 +106,8 @@ Edit `config/config.json` to customize settings:
     "window_size": "800x600"
   },
   "security": {
-    "allowed_commands": ["ls", "pwd", "python3", "ping"],
-    "restricted_paths": ["/etc", "/sys"]
+    "allowed_commands": ["ls", "pwd", "cat", "echo", "python3", "python", "ping"],
+    "restricted_paths": ["/etc", "/sys", "/proc"]
   }
 }
 ```
