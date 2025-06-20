@@ -34,3 +34,61 @@ def test_auto_save_no_deadlock(tmp_path):
     recalled = manager.recall("topic")
     assert recalled is not None
     assert recalled.get("value") == "value"
+
+
+def test_memory_forget(tmp_path):
+    """forget should remove entries and return False when missing."""
+    path = tmp_path / "mem.db"
+    manager = MemoryManager(str(path), auto_save=False)
+
+    # Missing key returns False
+    assert manager.forget("missing") is False
+
+    manager.remember("foo", "bar")
+    assert manager.recall("foo") is not None
+    # Existing key removed
+    assert manager.forget("foo") is True
+    assert manager.recall("foo") is None
+
+
+def test_memory_fuzzy_recall(tmp_path):
+    """fuzzy_recall should return approximate matches."""
+    path = tmp_path / "mem.db"
+    manager = MemoryManager(str(path), auto_save=False)
+
+    manager.remember("greeting", "hello world")
+    manager.remember("farewell", "goodbye friend")
+
+    keys_partial = [k for k, _ in manager.fuzzy_recall("greet")]
+    assert "greeting" in keys_partial
+
+    keys_value = [k for k, _ in manager.fuzzy_recall("hello")]
+    assert "greeting" in keys_value
+
+
+def test_memory_get_stats(tmp_path):
+    """get_stats should report accurate counts after operations."""
+    path = tmp_path / "mem.db"
+    manager = MemoryManager(str(path), auto_save=False)
+
+    manager.remember("a", "1", category="cat1")
+    manager.remember("b", "2", category="cat1")
+    manager.remember("c", "3", category="cat2")
+
+    # Access some entries to update counts
+    manager.recall("a")
+    manager.recall("a")
+    manager.recall("c")
+
+    # Remove one entry
+    manager.forget("b")
+
+    stats = manager.get_stats()
+
+    assert stats["total_entries"] == 2
+    assert sorted(stats["categories"]) == sorted(["cat1", "cat2"])
+
+    assert stats["oldest_entry"] == min(stats["timestamps"].values())
+    assert stats["newest_entry"] == max(stats["timestamps"].values())
+    assert stats["most_accessed"] == "a"
+    assert stats["most_accessed"] == "a"
