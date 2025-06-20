@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from datetime import datetime
 import threading
+import queue
 from typing import Dict, Any
 
 # Import our core modules
@@ -23,6 +24,16 @@ class JanAssistantGUI:
         
         # Setup GUI
         self.setup_gui()
+
+        # Queues and worker thread for async processing
+        self.message_queue = queue.Queue()
+        self.result_queue = queue.Queue()
+        self.worker_thread = threading.Thread(
+            target=self._worker_loop, daemon=True
+        )
+        self.worker_thread.start()
+        # Periodically check for results
+        self.root.after(100, self._check_results)
     
     def setup_gui(self):
         """Create the GUI interface"""
@@ -207,33 +218,56 @@ class JanAssistantGUI:
         """Update status label"""
         self.status_label.config(text=status, fg=color)
         self.root.update()
+
+    def _worker_loop(self):
+        """Dedicated worker thread for processing messages"""
+        while True:
+            try:
+                message = self.message_queue.get(timeout=1)
+                result = self.process_message(message)
+                self.result_queue.put(result)
+            except queue.Empty:
+                continue
+            except Exception as e:
+                self.result_queue.put({"type": "error", "content": str(e)})
+
+    def _check_results(self):
+        """Check for processed results and update the GUI"""
+        try:
+            result = self.result_queue.get_nowait()
+        except queue.Empty:
+            pass
+        else:
+            if result.get("type") == "error":
+                self.add_to_chat("⚠️ Error", result.get("content", ""))
+            else:
+                self.add_to_chat("🤖 Assistant", result.get("content", ""))
+            self.update_status("Ready", "#00ff00")
+            self.send_button.config(state=tk.NORMAL)
+        finally:
+            self.root.after(100, self._check_results)
     
     def send_message(self, event=None):
         """Send message to assistant"""
         message = self.user_input.get().strip()
         if not message:
             return
-            
+
         self.user_input.delete(0, tk.END)
         self.add_to_chat("You", message)
-        
+
         self.send_button.config(state=tk.DISABLED)
         self.update_status("🤔 Thinking...", "#ffff00")
-        
-        # Process in thread
-        threading.Thread(target=self.process_message, args=(message,), daemon=True).start()
-    
-    def process_message(self, message: str):
-        """Process message with the controller"""
-        response = self.controller.process_message(message)
-        
-        if response['type'] == 'error':
-            self.root.after(0, lambda: self.add_to_chat("⚠️ Error", response['content']))
-        else:
-            self.root.after(0, lambda: self.add_to_chat("🤖 Assistant", response['content']))
 
-        self.root.after(0, lambda: self.update_status("Ready", "#00ff00"))
-        self.root.after(0, lambda: self.send_button.config(state=tk.NORMAL))
+        # Queue message for worker thread
+        self.message_queue.put(message)
+
+    def process_message(self, message: str) -> Dict[str, Any]:
+        """Process message with the controller"""
+        try:
+            return self.controller.process_message(message)
+        except Exception as e:
+            return {"type": "error", "content": str(e)}
 
     # GUI Event handlers
     def save_chat(self):
