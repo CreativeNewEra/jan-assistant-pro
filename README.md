@@ -37,7 +37,7 @@ A powerful, local-first AI assistant with tools that works with [Jan.ai](https:/
 ### Dependencies
 - `requests` - HTTP client for API communication
 - `tkinter` - GUI framework (usually included with Python)
-- `psutil` - System monitoring (optional but recommended)
+- `psutil` - System monitoring (installed by default via `requirements.txt`)
 
 ## 🛠️ Installation
 
