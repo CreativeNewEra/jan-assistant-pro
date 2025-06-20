@@ -7,12 +7,15 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 
 import requests
+from src.core.logging_config import get_logger, setup_logging
 
 class JanAssistantGUI:
     def __init__(self):
         self.api_base = "http://127.0.0.1:1337/v1"
         self.api_key = "124578"
         self.model = "qwen3:30b-a3b"
+        setup_logging()
+        self.logger = get_logger(self.__class__.__name__)
         self.conversation_history = []
         self.memory_file = "jan_memory.json"
         self.memory = self.load_memory()
@@ -25,7 +28,10 @@ class JanAssistantGUI:
                 with open(self.memory_file, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            print(f"Error loading memory: {e}")
+            self.logger.error(
+                "Error loading memory",
+                extra={"extra_fields": {"error": str(e)}},
+            )
         return {}
     
     def save_memory(self):
@@ -34,7 +40,10 @@ class JanAssistantGUI:
             with open(self.memory_file, 'w') as f:
                 json.dump(self.memory, f, indent=2)
         except Exception as e:
-            print(f"Error saving memory: {e}")
+            self.logger.error(
+                "Error saving memory",
+                extra={"extra_fields": {"error": str(e)}},
+            )
     
     def setup_gui(self):
         """Create the GUI interface"""
