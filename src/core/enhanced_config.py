@@ -23,7 +23,7 @@ class EnhancedConfig(Config):
 
     def get(self, key_path: str, default: Any = None):
         """Get config value with environment variable override"""
-        env_key = f"JAN_ASSISTANT_{key_path.replace('.', '_').upper()}"
+        env_key = f"{ENV_PREFIX}{key_path.replace('.', '_').upper()}"
         env_value = os.getenv(env_key)
         if env_value is not None:
             return self._convert_env_value(env_value)
