@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from src.core.config import Config
+from src.core.unified_config import UnifiedConfig
 from src.tools.system_tools import SystemTools
 
 
@@ -46,7 +46,7 @@ def test_check_network_connectivity_failure_result_error():
 
 
 def test_check_network_connectivity_with_default_config(tmp_path):
-    cfg = Config(config_path=str(tmp_path / "config.json"))
+    cfg = UnifiedConfig(config_path=str(tmp_path / "config.json"))
     tools = SystemTools(allowed_commands=cfg.get("security.allowed_commands"))
     assert "ping" in tools.allowed_commands
     mock_result = {'success': True, 'return_code': 0, 'stdout': 'ok', 'stderr': ''}
