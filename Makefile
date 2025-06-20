@@ -2,33 +2,28 @@
 
 # Development setup
 install:
-	pip install -r requirements.txt
-	pip install -r requirements-dev.txt
-	pip install -e .
+        poetry install --with dev
 
 # Testing
 test:
-	python -m pytest tests/ -v
+        poetry run pytest tests/ -v
 
 test-coverage:
-	python -m pytest tests/ --cov=src --cov-report=html --cov-report=term
+        poetry run pytest tests/ --cov=src --cov-report=html --cov-report=term
 
 test-watch:
-	python -m pytest-watch tests/ src/
+        poetry run pytest-watch tests/ src/
 
 # Code quality
 lint:
-	flake8 src/ tests/
-	mypy src/
-	bandit -r src/
+        ruff src/ tests/
+        mypy src/
 
 format:
-	black src/ tests/
-	isort src/ tests/
+        black src/ tests/
 
 format-check:
-	black --check src/ tests/
-	isort --check-only src/ tests/
+        black --check src/ tests/
 
 # Security check
 security:
@@ -51,7 +46,7 @@ run-debug:
 
 # Build distribution
 build:
-	python setup.py sdist bdist_wheel
+        poetry build
 
 # Pre-commit hooks
 pre-commit-install:

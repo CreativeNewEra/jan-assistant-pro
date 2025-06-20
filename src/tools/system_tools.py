@@ -238,7 +238,7 @@ class SystemTools:
         except ImportError:
             return {
                 'success': False,
-                'error': 'psutil not available. Install with: pip install psutil'
+                'error': 'psutil not available. Install with: poetry add psutil'
             }
         except Exception as e:
             return {

@@ -19,25 +19,18 @@ Thank you for your interest in contributing to Jan Assistant Pro! This document 
    cd jan-assistant-pro
    ```
 
-2. **Create a virtual environment**
+2. **Install dependencies**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   poetry install --with dev
    ```
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   pip install -e .  # Install in development mode
-   ```
-
-4. **Copy configuration**
+3. **Copy configuration**
    ```bash
    cp config/config.example.json config/config.json
    # Edit config.json with your settings
    ```
 
-5. **Run the application**
+4. **Run the application**
    ```bash
    python main.py
    ```
@@ -347,7 +340,7 @@ Add any other context about the feature request.
 3. **Format code**
    ```bash
    black src/ tests/
-   flake8 src/ tests/
+   ruff src/ tests/
    ```
 
 4. **Update documentation** if needed
@@ -422,7 +415,7 @@ We follow [Semantic Versioning](https://semver.org/):
 ### Development Tools
 
 - **Code formatting**: [Black](https://black.readthedocs.io/)
-- **Linting**: [flake8](https://flake8.pycqa.org/)
+- **Linting**: [ruff](https://docs.astral.sh/ruff/)
 - **Type checking**: [mypy](https://mypy.readthedocs.io/)
 - **Testing**: [pytest](https://docs.pytest.org/)
 

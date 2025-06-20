@@ -52,7 +52,7 @@ and enjoy inline autocomplete suggestions while typing.
 ### Dependencies
 - `requests` - HTTP client for API communication
 - `tkinter` - GUI framework (usually included with Python)
-- `psutil` - System monitoring (installed by default via `requirements.txt`)
+- `psutil` - System monitoring (optional extra via `poetry install --with system`)
 
 ## 🛠️ Installation
 
@@ -66,7 +66,7 @@ and enjoy inline autocomplete suggestions while typing.
 
 2. **Install dependencies**:
    ```bash
-   pip install -r requirements.txt
+   poetry install
    ```
 
 3. **Configure your API settings**:
@@ -89,16 +89,12 @@ For development with additional tools:
 git clone https://github.com/CreativeNewEra/jan-assistant-pro.git
 cd jan-assistant-pro
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install development dependencies
-pip install -r requirements.txt
-pip install -e .[dev]
+poetry install --with dev
 
 # Run tests
-python -m pytest tests/
+poetry run pytest tests/
 ```
 
 ## ⚙️ Configuration
@@ -313,7 +309,7 @@ coverage html  # Creates htmlcov/ directory
 black src/ tests/
 
 # Check style
-flake8 src/ tests/
+ruff src/ tests/
 
 # Type checking
 mypy src/

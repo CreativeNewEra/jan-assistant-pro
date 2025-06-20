@@ -66,14 +66,12 @@ graph TD
    ```bash
    git clone https://github.com/CreativeNewEra/jan-assistant-pro.git
    cd jan-assistant-pro
-   python -m venv venv
-   source venv/bin/activate  # Windows: venv\Scripts\activate
-   pip install -r requirements.txt
+   poetry install --with dev
    ```
 
 2. **Run tests to verify setup**:
    ```bash
-   python -m pytest tests/ -v
+   poetry run pytest tests/ -v
    ```
 
 3. **Start development server**:
@@ -298,16 +296,16 @@ class TestToolIntegration(unittest.TestCase):
 
 ```bash
 # Run all tests
-python -m pytest tests/ -v
+poetry run pytest tests/ -v
 
 # Run with coverage
-python -m pytest tests/ --cov=src/ --cov-report=html
+poetry run pytest tests/ --cov=src/ --cov-report=html
 
 # Run specific test file
-python -m pytest tests/test_enhanced_features.py -v
+poetry run pytest tests/test_enhanced_features.py -v
 
 # Run tests matching pattern
-python -m pytest tests/ -k "test_weather" -v
+poetry run pytest tests/ -k "test_weather" -v
 ```
 
 ## Configuration
