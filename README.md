@@ -10,7 +10,8 @@ A powerful, local-first AI assistant with tools that **work** with Jan.ai.
 
 - 📁 **File Operations**: Read, write, list, copy, and delete files with security controls
 - 🧠 **Persistent Memory**: Remember information between sessions with fuzzy search
-- 💻 **System Commands**: Execute terminal commands safely with configurable permissions
+ - 💻 **System Commands**: Execute terminal commands safely with configurable permissions
+ - 🌐 **Network Connectivity**: Verify connection status using a ping check (requires `ping` to be allowed)
 - 🎨 **Beautiful GUI**: Dark theme with intuitive interface and status indicators
 - ⚡ **Multi-threading**: Responsive, non-blocking interface
 - 🔧 **Tool System**: Extensible framework for adding new capabilities
@@ -104,11 +105,13 @@ Edit `config/config.json` to customize settings:
     "window_size": "800x600"
   },
   "security": {
-    "allowed_commands": ["ls", "pwd", "python3"],
+    "allowed_commands": ["ls", "pwd", "python3", "ping"],
     "restricted_paths": ["/etc", "/sys"]
   }
 }
 ```
+
+Ensure `"ping"` is listed in `allowed_commands` if you want the network connectivity check to work.
 
 ### Jan.ai Setup
 
