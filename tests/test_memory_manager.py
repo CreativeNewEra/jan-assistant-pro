@@ -22,3 +22,15 @@ def test_memory_persistence(tmp_path):
     recalled = new_manager.recall("greeting")
     assert recalled is not None
     assert recalled.get("value") == "hello"
+
+
+def test_auto_save_no_deadlock(tmp_path):
+    """Calling remember and recall with auto_save enabled should not deadlock."""
+    temp_path = tmp_path / "memory_test.db"
+    manager = MemoryManager(str(temp_path))
+
+    assert manager.remember("topic", "value") is True
+
+    recalled = manager.recall("topic")
+    assert recalled is not None
+    assert recalled.get("value") == "value"

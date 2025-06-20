@@ -10,14 +10,18 @@ import threading
 
 
 class MemoryManager:
-    """Manages persistent memory for the assistant"""
+    """Manages persistent memory for the assistant.
+
+    A reentrant lock is used to avoid nested locking issues when methods
+    like ``remember`` or ``recall`` trigger ``save_memory`` internally.
+    """
     
     def __init__(self, memory_file: str, max_entries: int = 1000, auto_save: bool = True):
         self.memory_file = memory_file
         self.max_entries = max_entries
         self.auto_save = auto_save
         self.memory_data = {}
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         
         # Ensure directory exists
         self._ensure_memory_dir()
