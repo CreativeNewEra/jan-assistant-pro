@@ -22,6 +22,8 @@ Jan Assistant Pro is built with enterprise-grade architecture featuring:
 - **Advanced Logging**: Production-ready logging infrastructure
 - **Schema Validation**: Type-safe configuration
 - **Comprehensive Testing**: Full test coverage
+- **Progress Bar** and **Connection Indicator** for clear status
+- **History Navigation** with **Autocomplete** in the GUI
 
 ## Architecture
 
@@ -86,6 +88,7 @@ src/
 ├── core/                           # Core application logic
 │   ├── app_controller.py          # Main application controller
 │   ├── config.py                  # Configuration management
+│   ├── enhanced_config.py        # Environment-aware config
 │   ├── config_validator.py        # Schema-based validation
 │   ├── exceptions.py              # Custom exception hierarchy
 │   ├── logging_config.py          # Advanced logging setup

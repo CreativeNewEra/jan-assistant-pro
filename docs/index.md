@@ -10,6 +10,9 @@ Welcome to the Jan Assistant Pro documentation! This project features enterprise
 - **✅ Configuration Validation**: Schema-based config validation with auto-documentation
 - **🧪 Comprehensive Testing**: Full test suite with high coverage and CI/CD ready
 - **🔧 Professional Architecture**: Clean MVC separation with extensible design
+- ⏳ **Progress Bar** and **Connection Indicator**
+  show API status and processing progress
+- ⬆️⬇️ **History Navigation** with **Autocomplete** for quick commands
 
 ## 📚 Documentation
 
@@ -79,6 +82,7 @@ Jan Assistant Pro now follows enterprise-grade MVC architecture:
 │                 │    │                 │    │                 │
 │ main_window.py  │◄──►│app_controller.py│◄──►│  tool_registry  │
 │                 │    │                 │    │  config.py      │
+│                 │    │                 │    │  enhanced_config│
 │ - UI Rendering  │    │ - Business      │    │  api_client.py  │
 │ - User Input    │    │   Logic         │    │  memory.py      │
 │ - Display       │    │ - Coordination  │    │  tools/         │
