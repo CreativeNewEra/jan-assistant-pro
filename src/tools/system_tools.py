@@ -16,7 +16,7 @@ class SystemTools:
         self.allowed_commands = allowed_commands or [
             "ls", "pwd", "cat", "echo", "python3", "python", "pip", "pip3",
             "git", "curl", "wget", "grep", "find", "wc", "head", "tail",
-            "sort", "uniq", "date", "whoami", "which", "type"
+            "sort", "uniq", "date", "whoami", "which", "type", "ping"
         ]
         self.timeout = timeout
         self.system = platform.system().lower()
@@ -304,12 +304,13 @@ class SystemTools:
                     'message': f"Successfully connected to {host}"
                 }
             else:
+                error_msg = result.get('stderr') or result.get('error', 'Unknown error')
                 return {
                     'success': False,
                     'connected': False,
                     'host': host,
                     'message': f"Could not connect to {host}",
-                    'error': result.get('stderr', 'Unknown error')
+                    'error': error_msg
                 }
                 
         except Exception as e:

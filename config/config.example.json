@@ -23,7 +23,7 @@
     "web_search": false
   },
   "security": {
-    "allowed_commands": ["ls", "pwd", "cat", "echo"],
+    "allowed_commands": ["ls", "pwd", "cat", "echo", "ping"],
     "restricted_paths": ["/etc", "/sys", "/proc"],
     "max_file_size": "10MB"
   }
