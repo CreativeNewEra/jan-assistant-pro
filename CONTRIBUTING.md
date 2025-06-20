@@ -54,7 +54,7 @@ jan-assistant-pro/
 ### Code Style
 
 - **Python**: Follow PEP 8
-- **Line length**: 88 characters (Black formatter)
+- **Line length**: 88 characters (Ruff formatter)
 - **Imports**: Use absolute imports
 - **Docstrings**: Google style docstrings
 - **Type hints**: Use type hints where possible
@@ -339,7 +339,7 @@ Add any other context about the feature request.
 
 3. **Format code**
    ```bash
-   black src/ tests/
+   ruff format src/ tests/
    ruff src/ tests/
    ```
 
@@ -414,7 +414,7 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ### Development Tools
 
-- **Code formatting**: [Black](https://black.readthedocs.io/)
+- **Code formatting**: [Ruff](https://docs.astral.sh/ruff/)
 - **Linting**: [ruff](https://docs.astral.sh/ruff/)
 - **Type checking**: [mypy](https://mypy.readthedocs.io/)
 - **Testing**: [pytest](https://docs.pytest.org/)
