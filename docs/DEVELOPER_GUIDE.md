@@ -315,21 +315,23 @@ poetry run pytest tests/ -k "test_weather" -v
 
 ### Schema-Based Validation
 
-Configuration is validated using schemas defined in `config_validator.py`:
+Configuration is validated and loaded through `UnifiedConfig`, which
+combines schema validation and environment variable support:
 
 ```python
-from core.config_validator import ConfigValidator, ValidationRule
+from core.unified_config import UnifiedConfig
+from core.config_validator import ValidationRule
 
 # Create custom validation rules
-validator = ConfigValidator()
-validator.schema.add_rule('my_tool.api_key', ValidationRule(
+cfg = UnifiedConfig('config.json')
+cfg.validator.schema.add_rule('my_tool.api_key', ValidationRule(
     field_type=str,
     required=True,
     description="API key for my tool"
 ))
 
 # Validate configuration
-config = validator.validate_config_file('config.json')
+config = cfg.config_data
 ```
 
 ### Configuration Structure
