@@ -91,4 +91,3 @@ def test_memory_get_stats(tmp_path):
     assert stats["oldest_entry"] == min(stats["timestamps"].values())
     assert stats["newest_entry"] == max(stats["timestamps"].values())
     assert stats["most_accessed"] == "a"
-    assert stats["most_accessed"] == "a"
