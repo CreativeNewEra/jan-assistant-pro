@@ -16,14 +16,14 @@ test-watch:
 
 # Code quality
 lint:
-        ruff src/ tests/
+        ruff check src/ tests/
         mypy src/
 
 format:
-        black src/ tests/
+        ruff format src/ tests/
 
 format-check:
-        black --check src/ tests/
+        ruff format --check src/ tests/
 
 # Security check
 security:
