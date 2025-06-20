@@ -250,7 +250,7 @@ class MemoryManager:
                     'most_accessed': None
                 }
             
-            timestamps = {k: m.get('timestamp', '') for k, m in self.memory_data.items()}
+            timestamps = [m.get('timestamp', '') for m in self.memory_data.values()]
             access_counts = [(k, m.get('access_count', 0)) for k, m in self.memory_data.items()]
 
             most_accessed = max(access_counts, key=lambda x: x[1]) if access_counts else None
