@@ -3,8 +3,9 @@ File operation tools for Jan Assistant Pro
 """
 
 import os
-from pathlib import Path
 import shutil
+import tempfile
+from pathlib import Path
 from typing import Any, Dict, List
 
 from src.core.logging_config import get_logger
@@ -151,9 +152,21 @@ class FileTools:
             if directory and not os.path.exists(directory):
                 os.makedirs(directory, exist_ok=True)
 
-            # Write the file
-            with open(file_path, "w", encoding=encoding) as f:
-                f.write(content)
+            # Write to a temporary file in the same directory for atomic replace
+            temp_dir = directory if directory else "."
+            tmp_file = None
+            try:
+                with tempfile.NamedTemporaryFile(
+                    "w", delete=False, dir=temp_dir, encoding=encoding
+                ) as tmp:
+                    tmp_file = tmp.name
+                    tmp.write(content)
+                    tmp.flush()
+                    os.fsync(tmp.fileno())
+                os.replace(tmp_file, file_path)
+            finally:
+                if tmp_file and os.path.exists(tmp_file):
+                    os.remove(tmp_file)
 
             return {
                 "success": True,
@@ -200,9 +213,24 @@ class FileTools:
             if directory and not os.path.exists(directory):
                 os.makedirs(directory, exist_ok=True)
 
-            # Append to the file
-            with open(file_path, "a", encoding=encoding) as f:
-                f.write(content)
+            # Append by writing to a temporary file and then replacing atomically
+            temp_dir = directory if directory else "."
+            tmp_file = None
+            try:
+                with tempfile.NamedTemporaryFile(
+                    "w", delete=False, dir=temp_dir, encoding=encoding
+                ) as tmp:
+                    tmp_file = tmp.name
+                    if os.path.exists(file_path):
+                        with open(file_path, "r", encoding=encoding) as original:
+                            shutil.copyfileobj(original, tmp)
+                    tmp.write(content)
+                    tmp.flush()
+                    os.fsync(tmp.fileno())
+                os.replace(tmp_file, file_path)
+            finally:
+                if tmp_file and os.path.exists(tmp_file):
+                    os.remove(tmp_file)
 
             return {
                 "success": True,

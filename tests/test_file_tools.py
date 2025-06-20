@@ -1,3 +1,5 @@
+import os
+
 from src.tools.file_tools import FileTools
 
 
@@ -69,3 +71,32 @@ def test_restricted_path_access(tmp_path):
     assert result["success"] is False
     assert "restricted" in result["error"]
 
+
+def test_write_file_atomic_failure(monkeypatch, tmp_path):
+    tools = FileTools()
+    file_path = tmp_path / "atomic.txt"
+    file_path.write_text("original")
+
+    def fail_replace(src, dst):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(os, "replace", fail_replace)
+    result = tools.write_file(str(file_path), "new", overwrite=True)
+    assert result["success"] is False
+    assert file_path.read_text() == "original"
+    assert list(tmp_path.iterdir()) == [file_path]
+
+
+def test_append_file_atomic_failure(monkeypatch, tmp_path):
+    tools = FileTools()
+    file_path = tmp_path / "append.txt"
+    file_path.write_text("orig")
+
+    def fail_replace(src, dst):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(os, "replace", fail_replace)
+    result = tools.append_file(str(file_path), "more")
+    assert result["success"] is False
+    assert file_path.read_text() == "orig"
+    assert list(tmp_path.iterdir()) == [file_path]
