@@ -4,8 +4,8 @@ Jan Assistant Pro
 A powerful local-first AI assistant with tools
 """
 
-import sys
 import os
+import sys
 import tkinter as tk
 from tkinter import messagebox
 
@@ -13,8 +13,8 @@ from tkinter import messagebox
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 try:
-    from gui.main_window import JanAssistantGUI
-    from core.config import Config
+    from src.gui.main_window import JanAssistantGUI
+    from src.core.config import Config
 except ImportError as e:
     print(f"Import error: {e}")
     print("Please ensure all dependencies are installed: poetry install")

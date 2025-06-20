@@ -3,12 +3,12 @@ Logging configuration for Jan Assistant Pro
 Provides structured logging with multiple outputs and levels
 """
 
+from datetime import datetime
 import json
 import logging
 import logging.handlers
 import os
 import sys
-from datetime import datetime
 from typing import Any, Dict, Optional
 
 

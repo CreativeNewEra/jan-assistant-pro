@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from core.enhanced_config import EnhancedConfig
+from src.core.enhanced_config import EnhancedConfig
 
 
 def test_env_override_int(tmp_path, monkeypatch):

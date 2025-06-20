@@ -3,9 +3,9 @@ Base tool interface for Jan Assistant Pro
 Provides the foundation for the dynamic tool registry system
 """
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import logging
 from typing import Any, Dict, List, Optional
 
 

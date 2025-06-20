@@ -3,13 +3,13 @@ Application Controller for Jan Assistant Pro
 Handles the main application logic, decoupling it from the GUI.
 """
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
-from core.config import Config
-from core.api_client import APIClient, APIError
-from core.memory import MemoryManager
-from tools.file_tools import FileTools
-from tools.system_tools import SystemTools
+from src.core.config import Config
+from src.core.api_client import APIClient, APIError
+from src.core.memory import MemoryManager
+from src.tools.file_tools import FileTools
+from src.tools.system_tools import SystemTools
 
 
 class AppController:

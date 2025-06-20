@@ -3,13 +3,13 @@ Configuration validation for Jan Assistant Pro
 Provides schema-based validation and type safety for configuration
 """
 
+from dataclasses import dataclass, field
 import json
 import os
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union
 
-from .exceptions import ConfigurationError, ValidationError
+from src.core.exceptions import ConfigurationError, ValidationError
 
 
 @dataclass

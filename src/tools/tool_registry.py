@@ -3,12 +3,12 @@ Dynamic tool registry system for Jan Assistant Pro
 Manages registration, discovery, and execution of tools
 """
 
+from collections import defaultdict
 import inspect
 import logging
-from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set, Type
 
-from .base_tool import BaseTool, ToolInfo
+from src.tools.base_tool import BaseTool, ToolInfo
 
 
 class ToolRegistryError(Exception):
