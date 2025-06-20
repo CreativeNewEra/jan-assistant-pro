@@ -155,7 +155,7 @@ class AppController:
                 matches = self.memory_manager.fuzzy_recall(key)
                 if matches:
                     similar = [
-                        f"{k}: {v[\"value\"]}" for k, v in matches[:3]
+                        f"{k}: {v['value']}" for k, v in matches[:3]
                     ]
                     return (
                         "Found similar memories: " +
