@@ -154,7 +154,7 @@ class FileTools:
                 'success': True,
                 'file_path': file_path,
                 'size_bytes': len(content.encode(encoding)),
-                'created': (not os.path.exists(file_path)) if not overwrite else (not file_existed)
+                'created': not file_existed
             }
             
         except PermissionError:
