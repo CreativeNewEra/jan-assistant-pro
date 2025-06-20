@@ -75,6 +75,10 @@ def test_memory_get_stats(tmp_path):
     manager.remember("b", "2", category="cat1")
     manager.remember("c", "3", category="cat2")
 
+    ts_a = manager.memory_data["a"]["timestamp"]
+    ts_b = manager.memory_data["b"]["timestamp"]
+    ts_c = manager.memory_data["c"]["timestamp"]
+
     # Access some entries to update counts
     manager.recall("a")
     manager.recall("a")
@@ -88,7 +92,8 @@ def test_memory_get_stats(tmp_path):
     assert stats["total_entries"] == 2
     assert sorted(stats["categories"]) == sorted(["cat1", "cat2"])
 
-    assert stats["oldest_entry"] == min(stats["timestamps"].values())
-    assert stats["newest_entry"] == max(stats["timestamps"].values())
-    assert stats["most_accessed"] == "a"
+    expected_oldest = min(ts_a, ts_c)
+    expected_newest = max(ts_a, ts_c)
+    assert stats["oldest_entry"] == expected_oldest
+    assert stats["newest_entry"] == expected_newest
     assert stats["most_accessed"] == "a"
