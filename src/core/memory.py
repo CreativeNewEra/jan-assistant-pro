@@ -389,7 +389,7 @@ class EnhancedMemoryManager:
                     0
                 ]
                 if count >= self.max_entries:
-                    cleanup_count = self.max_entries // 10
+                    cleanup_count = max(1, self.max_entries // 10)
                     conn.execute(
                         """
                         DELETE FROM memories
