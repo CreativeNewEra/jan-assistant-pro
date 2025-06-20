@@ -164,6 +164,9 @@ class FileTools:
                     tmp.flush()
                     os.fsync(tmp.fileno())
                 os.replace(tmp_file, file_path)
+                # Preserve metadata if the original file existed
+                if file_existed:
+                    shutil.copystat(tmp_file, file_path)
             finally:
                 if tmp_file and os.path.exists(tmp_file):
                     os.remove(tmp_file)
