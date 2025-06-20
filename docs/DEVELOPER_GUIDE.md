@@ -67,7 +67,10 @@ graph TD
    git clone https://github.com/CreativeNewEra/jan-assistant-pro.git
    cd jan-assistant-pro
    poetry install --with dev
+   pre-commit install
    ```
+   This installs git hooks so formatting and type checks run automatically
+   before each commit.
 
 2. **Run tests to verify setup**:
    ```bash

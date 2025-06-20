@@ -95,7 +95,12 @@ poetry install --with dev
 
 # Run tests
 poetry run pytest tests/
+
+# Install git hooks
+pre-commit install
 ```
+Running this command sets up git hooks so Ruff and mypy run automatically
+before each commit.
 
 ## ⚙️ Configuration
 
