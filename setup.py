@@ -15,7 +15,7 @@ setup(
     version="0.1.0",
     author="Your Name",
     author_email="your.email@example.com",
-    description="A powerful, local-first AI assistant with tools that works with Jan.ai",
+    description="A powerful, local-first AI assistant with tools that work with Jan.ai",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/jan-assistant-pro",
