@@ -17,3 +17,12 @@ def test_write_file_created_flag_overwrite(tmp_path):
     result = tools.write_file(str(file_path), "new", overwrite=True)
     assert result["created"] is False
     assert file_path.read_text() == "new"
+
+
+def test_write_file_no_overwrite_existing(tmp_path):
+    tools = FileTools()
+    file_path = tmp_path / "test.txt"
+    file_path.write_text("original")
+    result = tools.write_file(str(file_path), "new", overwrite=False)
+    assert result["success"] is False
+    assert file_path.read_text() == "original"
