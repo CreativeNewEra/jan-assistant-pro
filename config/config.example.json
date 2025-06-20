@@ -24,7 +24,11 @@
   },
   "security": {
     "allowed_commands": ["ls", "pwd", "cat", "echo", "ping"],
+    "blocked_commands": ["rm", "shutdown"],
     "restricted_paths": ["/etc", "/sys", "/proc"],
+    "command_timeout": 30,
+    "max_command_output": "20KB",
+    "sandbox_dir": "sandbox",
     "max_file_size": "10MB"
   }
 }

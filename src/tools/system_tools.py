@@ -5,8 +5,9 @@ System command tools for Jan Assistant Pro
 import os
 import platform
 import shlex
-import subprocess
 from typing import Any, Dict, List
+
+from src.tools.secure_command_executor import SecureCommandExecutor
 
 from src.core.logging_config import get_logger
 
@@ -14,7 +15,12 @@ from src.core.logging_config import get_logger
 class SystemTools:
     """Tools for executing system commands safely"""
 
-    def __init__(self, allowed_commands: List[str] = None, timeout: int = 30):
+    def __init__(
+        self,
+        allowed_commands: List[str] | None = None,
+        blocked_commands: List[str] | None = None,
+        timeout: int = 30,
+    ):
         self.allowed_commands = allowed_commands or [
             "ls",
             "pwd",
@@ -40,6 +46,7 @@ class SystemTools:
             "type",
             "ping",
         ]
+        self.blocked_commands = blocked_commands or ["rm", "shutdown", "reboot"]
         self.timeout = timeout
         self.system = platform.system().lower()
         self.logger = get_logger(
@@ -51,6 +58,8 @@ class SystemTools:
         """Check if a command is in the allowed list"""
         # Extract the base command (first word)
         base_command = command.strip().split()[0]
+        if base_command in self.blocked_commands:
+            return False
         return base_command in self.allowed_commands
 
     def _sanitize_command(self, command: str) -> str:
@@ -100,86 +109,23 @@ class SystemTools:
         Returns:
             Dictionary with execution results and metadata
         """
-        try:
-            # Security checks
-            if not self._is_command_allowed(command):
-                base_cmd = command.strip().split()[0]
-                return {
-                    "success": False,
-                    "error": f"Command '{base_cmd}' is not allowed. Allowed commands: {', '.join(self.allowed_commands)}",
-                }
-
-            # Sanitize command
-            try:
-                sanitized_command = self._sanitize_command(command)
-            except ValueError as e:
-                return {"success": False, "error": str(e)}
-
-            # Set working directory
-            if working_dir and not os.path.exists(working_dir):
-                return {
-                    "success": False,
-                    "error": f"Working directory '{working_dir}' does not exist",
-                }
-
-            # Execute command
-            if shell:
-                # Use shell execution
-                result = subprocess.run(
-                    sanitized_command,
-                    shell=True,
-                    capture_output=capture_output,
-                    text=True,
-                    timeout=self.timeout,
-                    cwd=working_dir,
-                )
-            else:
-                # Use argument list (safer)
-                args = shlex.split(sanitized_command)
-                result = subprocess.run(
-                    args,
-                    capture_output=capture_output,
-                    text=True,
-                    timeout=self.timeout,
-                    cwd=working_dir,
-                )
-
-            return {
-                "success": True,
-                "command": sanitized_command,
-                "return_code": result.returncode,
-                "stdout": result.stdout if capture_output else None,
-                "stderr": result.stderr if capture_output else None,
-                "working_dir": working_dir or os.getcwd(),
-            }
-
-        except subprocess.TimeoutExpired:
+        executor = SecureCommandExecutor(
+            allowed_commands=self.allowed_commands,
+            blocked_commands=self.blocked_commands,
+            timeout=self.timeout,
+        )
+        if working_dir and not os.path.exists(working_dir):
             return {
                 "success": False,
-                "error": f"Command timed out after {self.timeout} seconds",
+                "error": f"Working directory '{working_dir}' does not exist",
             }
-        except subprocess.CalledProcessError as e:
-            return {
-                "success": False,
-                "error": f"Command failed with return code {e.returncode}",
-                "stdout": e.stdout if capture_output else None,
-                "stderr": e.stderr if capture_output else None,
-            }
-        except FileNotFoundError:
-            return {
-                "success": False,
-                "error": f"Command not found: {command.split()[0]}",
-            }
-        except PermissionError:
-            return {
-                "success": False,
-                "error": f"Permission denied executing command: {command}",
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": f"Unexpected error executing command: {str(e)}",
-            }
+
+        return executor.execute(
+            command,
+            work_dir=working_dir,
+            capture_output=capture_output,
+            shell=shell,
+        )
 
     def get_system_info(self) -> Dict[str, Any]:
         """

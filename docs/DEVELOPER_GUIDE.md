@@ -101,7 +101,8 @@ src/
     ├── base_tool.py              # Abstract base tool class
     ├── tool_registry.py          # Dynamic tool registry
     ├── file_tools.py             # File operation tools
-    └── system_tools.py           # System command tools
+    ├── system_tools.py           # System command tools
+    └── secure_command_executor.py # Sandboxed command runner
 ```
 
 ## Tool Development
@@ -358,6 +359,10 @@ config = cfg.config_data
   "security": {
     "allowed_commands": ["ls", "pwd", "python3"],
     "restricted_paths": ["/etc", "/sys"],
+    "blocked_commands": ["rm", "shutdown"],
+    "command_timeout": 30,
+    "max_command_output": "20KB",
+    "sandbox_dir": "sandbox",
     "max_file_size": "10MB"
   },
   "logging": {
@@ -514,6 +519,7 @@ class MyToolError(JanAssistantError):
 2. **Path Sanitization**: Prevent path traversal attacks
 3. **Command Filtering**: Restrict allowed system commands
 4. **Audit Logging**: Log security-relevant operations
+5. **Sandboxed Command Execution**: Run commands in isolated directories with resource limits
 
 ## Migration Guide
 
