@@ -229,6 +229,7 @@ class JanAssistantGUI:
             except queue.Empty:
                 continue
             except Exception as e:
+                logging.error("An error occurred in the worker loop", exc_info=True)
                 self.result_queue.put({"type": "error", "content": str(e)})
 
     def _check_results(self):
