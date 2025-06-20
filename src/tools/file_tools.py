@@ -132,8 +132,10 @@ class FileTools:
                     'error': f"Access to path '{file_path}' is restricted"
                 }
             
+            file_existed = os.path.exists(file_path)
+
             # Check if file exists and overwrite is False
-            if os.path.exists(file_path) and not overwrite:
+            if file_existed and not overwrite:
                 return {
                     'success': False,
                     'error': f"File '{file_path}' already exists and overwrite is disabled"
@@ -152,7 +154,7 @@ class FileTools:
                 'success': True,
                 'file_path': file_path,
                 'size_bytes': len(content.encode(encoding)),
-                'created': not os.path.exists(file_path) if not overwrite else None
+                'created': not file_existed
             }
             
         except PermissionError:
