@@ -162,6 +162,8 @@ get current directory
 ```
 jan-assistant-pro/
 ├── main.py                 # Application entry point
+├── examples/               # Example GUI scripts
+│   └── jan_gui_fixed.py    # Advanced GUI example
 ├── src/
 │   ├── core/
 │   │   ├── config.py       # Configuration management
