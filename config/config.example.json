@@ -1,0 +1,30 @@
+{
+  "api": {
+    "base_url": "http://127.0.0.1:1337/v1",
+    "api_key": "your-api-key",
+    "model": "qwen3:30b-a3b",
+    "timeout": 30
+  },
+  "memory": {
+    "file": "data/memory.json",
+    "max_entries": 1000,
+    "auto_save": true
+  },
+  "ui": {
+    "theme": "dark",
+    "window_size": "800x600",
+    "font_family": "Consolas",
+    "font_size": 10
+  },
+  "tools": {
+    "file_operations": true,
+    "system_commands": true,
+    "memory_operations": true,
+    "web_search": false
+  },
+  "security": {
+    "allowed_commands": ["ls", "pwd", "cat", "echo"],
+    "restricted_paths": ["/etc", "/sys", "/proc"],
+    "max_file_size": "10MB"
+  }
+}

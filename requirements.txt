@@ -1,0 +1,3 @@
+requests>=2.31.0
+tkinter-tooltip>=2.1.0
+psutil>=5.8.0
