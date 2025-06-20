@@ -17,7 +17,7 @@ try:
     from core.config import Config
 except ImportError as e:
     print(f"Import error: {e}")
-    print("Please ensure all dependencies are installed: pip install -r requirements.txt")
+    print("Please ensure all dependencies are installed: poetry install")
     sys.exit(1)
 
 def main():
