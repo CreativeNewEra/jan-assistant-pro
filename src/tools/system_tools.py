@@ -296,7 +296,7 @@ class SystemTools:
             
             result = self.run_command(ping_cmd)
 
-            if result.get('success') and result.get('return_code') == 0:
+            if result.get('success', False) and result.get('return_code', -1) == 0:
                 return {
                     'success': True,
                     'connected': True,
