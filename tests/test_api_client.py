@@ -1,7 +1,7 @@
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-import requests
+
 
 from src.core.api_client import APIClient, APIError
 
@@ -13,16 +13,14 @@ def _create_client():
 def test_chat_completion_success():
     client = _create_client()
     messages = [{"role": "user", "content": "hi"}]
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "choices": [{"message": {"content": "hello"}}]
-    }
-    mock_response.raise_for_status = Mock()
-    with patch.object(client.session, "post", return_value=mock_response) as post:
+    async_mock = AsyncMock(
+        return_value={"choices": [{"message": {"content": "hello"}}]}
+    )
+    with patch.object(client._async_client, "chat_completion", async_mock):
         response = client.chat_completion(messages)
-        post.assert_called_once()
-        mock_response.raise_for_status.assert_called_once()
+        async_mock.assert_awaited_once_with(
+            messages, stream=False, temperature=0.7, max_tokens=None
+        )
     assert response["choices"][0]["message"]["content"] == "hello"
     assert client.extract_content(response) == "hello"
 
@@ -30,12 +28,8 @@ def test_chat_completion_success():
 def test_chat_completion_model_not_loaded():
     client = _create_client()
     messages = [{"role": "user", "content": "hi"}]
-    mock_response = Mock()
-    mock_response.status_code = 400
-    mock_response.json.return_value = {"message": "Engine is not loaded"}
-    http_error = requests.exceptions.HTTPError(response=mock_response)
-    mock_response.raise_for_status.side_effect = http_error
-    with patch.object(client.session, "post", return_value=mock_response):
+    async_mock = AsyncMock(side_effect=APIError("Model is not loaded"))
+    with patch.object(client._async_client, "chat_completion", async_mock):
         with pytest.raises(APIError) as exc:
             client.chat_completion(messages)
     assert "Model is not loaded" in str(exc.value)
@@ -44,9 +38,8 @@ def test_chat_completion_model_not_loaded():
 def test_chat_completion_connection_error():
     client = _create_client()
     messages = [{"role": "user", "content": "hi"}]
-    with patch.object(
-        client.session, "post", side_effect=requests.exceptions.ConnectionError
-    ):
+    async_mock = AsyncMock(side_effect=APIError("Could not connect"))
+    with patch.object(client._async_client, "chat_completion", async_mock):
         with pytest.raises(APIError) as exc:
             client.chat_completion(messages)
     assert "Could not connect" in str(exc.value)
