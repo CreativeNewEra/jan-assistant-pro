@@ -310,10 +310,9 @@ SYSTEM OPERATIONS:
 After using a tool, I'll give you the result and you can respond normally to the user."""
         
         messages = [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": message}
+            {"role": "system", "content": system_message}
         ]
-        
+
         # Add recent conversation history
         messages.extend(self.conversation_history[-6:])
         messages.append({"role": "user", "content": message})
