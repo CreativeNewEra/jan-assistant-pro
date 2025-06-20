@@ -5,7 +5,6 @@ Refactored from the original working implementation
 
 import tkinter as tk
 from tkinter import messagebox, filedialog
-from datetime import datetime
 import threading
 import queue
 from typing import Dict, Any
@@ -13,6 +12,7 @@ from typing import Dict, Any
 # Import our core modules
 from core.config import Config
 from core.app_controller import AppController
+from gui.enhanced_widgets import StatusBar, ChatInput, EnhancedChatDisplay
 
 
 class JanAssistantGUI:
@@ -65,23 +65,21 @@ class JanAssistantGUI:
         chat_frame = tk.Frame(main_frame, bg=self.bg_color)
         chat_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         
-        # Text widget with manual scrollbar
-        self.chat_display = tk.Text(
+        # Chat display widget
+        self.chat_display = EnhancedChatDisplay(
             chat_frame,
-            wrap=tk.WORD,
-            width=80,
-            height=25,
             bg=self.chat_bg_color,
             fg=self.fg_color,
-            font=(self.config.get('ui.font_family', 'Consolas'), 
-                  self.config.get('ui.font_size', 10)),
-            state=tk.DISABLED
+            font=(
+                self.config.get('ui.font_family', 'Consolas'),
+                self.config.get('ui.font_size', 10)
+            ),
         )
         
         # Manual scrollbar
         scrollbar = tk.Scrollbar(chat_frame, command=self.chat_display.yview)
         self.chat_display.config(yscrollcommand=scrollbar.set)
-        
+
         self.chat_display.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
@@ -90,21 +88,21 @@ class JanAssistantGUI:
         input_frame.pack(fill=tk.X, pady=(0, 10))
         
         # User input
-        self.user_input = tk.Entry(
-            input_frame, 
+        self.chat_input = ChatInput(
+            input_frame,
+            send_callback=self.send_message,
             font=('Arial', 12),
             bg=self.input_bg_color,
             fg=self.fg_color,
             insertbackground=self.fg_color
         )
-        self.user_input.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
-        self.user_input.bind('<Return>', self.send_message)
+        self.chat_input.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
         
         # Send button
         self.send_button = tk.Button(
-            input_frame, 
-            text="Send", 
-            command=self.send_message,
+            input_frame,
+            text="Send",
+            command=self.chat_input.submit,
             bg='#4CAF50',
             fg='white',
             font=('Arial', 12, 'bold')
@@ -115,15 +113,9 @@ class JanAssistantGUI:
         bottom_frame = tk.Frame(main_frame, bg=self.bg_color)
         bottom_frame.pack(fill=tk.X)
         
-        # Status label
-        self.status_label = tk.Label(
-            bottom_frame, 
-            text="Ready", 
-            bg=self.bg_color, 
-            fg='#00ff00',
-            font=('Arial', 10)
-        )
-        self.status_label.pack(side=tk.LEFT)
+        # Status bar
+        self.status_bar = StatusBar(bottom_frame, bg=self.bg_color)
+        self.status_bar.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
         # Buttons
         self._create_buttons(bottom_frame)
@@ -134,7 +126,7 @@ class JanAssistantGUI:
         # Test API connection
         self._test_api_connection()
         
-        self.user_input.focus()
+        self.chat_input.focus()
     
     def _apply_dark_theme(self):
         """Apply dark theme colors"""
@@ -184,40 +176,22 @@ class JanAssistantGUI:
         def test():
             status = self.controller.test_api_connection()
             if status['connected']:
-                self.root.after(0, lambda: self.update_status("✅ Connected", "#00ff00"))
+                self.root.after(0, lambda: self.status_bar.set_connected(True))
+                self.root.after(0, lambda: self.update_status("✅ Connected", "#00ff00", progress=False))
             else:
                 error_msg = status.get('error', 'Unknown error')
-                self.root.after(0, lambda: self.update_status(f"❌ {error_msg}", "#ff0000"))
-        
+                self.root.after(0, lambda: self.status_bar.set_connected(False))
+                self.root.after(0, lambda: self.update_status(f"❌ {error_msg}", "#ff0000", progress=False))
+
         threading.Thread(target=test, daemon=True).start()
     
     def add_to_chat(self, sender: str, message: str):
         """Add message to chat display"""
-        self.chat_display.config(state=tk.NORMAL)
-        
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        
-        # Color coding based on sender
-        if sender == "You":
-            color = "#00ff00"
-        elif sender == "🤖 Assistant":
-            color = "#87CEEB"
-        elif sender == "🔧 Tool":
-            color = "#FFA500"
-        elif sender == "⚠️ Error":
-            color = "#ff6b6b"
-        else:
-            color = self.fg_color
-        
-        # Insert message
-        self.chat_display.insert(tk.END, f"[{timestamp}] {sender}:\n{message}\n\n")
-        self.chat_display.config(state=tk.DISABLED)
-        self.chat_display.see(tk.END)
+        self.chat_display.add_message(sender, message)
     
-    def update_status(self, status: str, color: str = "#00ff00"):
-        """Update status label"""
-        self.status_label.config(text=status, fg=color)
-        self.root.update()
+    def update_status(self, status: str, color: str = "#00ff00", progress: bool = False):
+        """Update status bar"""
+        self.status_bar.set_status(status, color, progress)
 
     def _worker_loop(self):
         """Dedicated worker thread for processing messages"""
@@ -243,22 +217,21 @@ class JanAssistantGUI:
                 self.add_to_chat("⚠️ Error", result.get("content", ""))
             else:
                 self.add_to_chat("🤖 Assistant", result.get("content", ""))
-            self.update_status("Ready", "#00ff00")
+            self.update_status("Ready", "#00ff00", progress=False)
             self.send_button.config(state=tk.NORMAL)
         finally:
             self.root.after(100, self._check_results)
     
-    def send_message(self, event=None):
+    def send_message(self, message: str):
         """Send message to assistant"""
-        message = self.user_input.get().strip()
+        message = message.strip()
         if not message:
             return
 
-        self.user_input.delete(0, tk.END)
         self.add_to_chat("You", message)
 
         self.send_button.config(state=tk.DISABLED)
-        self.update_status("🤔 Thinking...", "#ffff00")
+        self.update_status("🤔 Thinking...", "#ffff00", progress=True)
 
         # Queue message for worker thread
         self.message_queue.put(message)
@@ -356,17 +329,19 @@ class JanAssistantGUI:
     def test_api(self):
         """Test API connection"""
         def test():
-            self.root.after(0, lambda: self.update_status("🔄 Testing API...", "#ffff00"))
+            self.root.after(0, lambda: self.update_status("🔄 Testing API...", "#ffff00", progress=True))
             status = self.controller.test_api_connection()
-            
+
             if status['connected']:
                 msg = f"✅ Connected! Latency: {status.get('latency_ms', 'N/A')}ms"
-                self.root.after(0, lambda: self.update_status(msg, "#00ff00"))
+                self.root.after(0, lambda: self.update_status(msg, "#00ff00", progress=False))
                 self.root.after(0, lambda: self.add_to_chat("System", f"API test successful. {msg}"))
+                self.root.after(0, lambda: self.status_bar.set_connected(True))
             else:
                 error = status.get('error', 'Unknown error')
-                self.root.after(0, lambda: self.update_status(f"❌ Failed", "#ff0000"))
+                self.root.after(0, lambda: self.update_status(f"❌ Failed", "#ff0000", progress=False))
                 self.root.after(0, lambda: self.add_to_chat("System", f"API test failed: {error}"))
+                self.root.after(0, lambda: self.status_bar.set_connected(False))
         
         threading.Thread(target=test, daemon=True).start()
     
