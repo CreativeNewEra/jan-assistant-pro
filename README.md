@@ -224,7 +224,7 @@ python -m pytest tests/
 python -m pytest tests/ --cov=src/
 
 # Run specific test
-python -m pytest tests/test_api_client.py -v
+python -m pytest tests/test_memory_manager.py -v
 ```
 
 ### Code Style
