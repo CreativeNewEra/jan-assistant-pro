@@ -397,6 +397,21 @@ Set any value to `0` to disable caching. TTL values are in seconds.
 
 Clear caches by deleting `data/cache/*` and restarting the app.
 
+### Database Migrations
+
+The SQLite memory database schema is versioned using a simple migration
+system located in `src/migrations/`. Each migration file exposes
+`upgrade(conn)` and `downgrade(conn)` functions. The current schema
+version is stored in the `schema_version` table.
+
+Migrations run automatically when `EnhancedMemoryManager` initializes, but
+you can apply or roll back migrations manually:
+
+```bash
+python -m src.core.migration_manager data/memory.sqlite        # apply
+python -m src.core.migration_manager data/memory.sqlite --rollback 1
+```
+
 ## Logging
 
 ### Setup Logging
