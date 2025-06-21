@@ -65,9 +65,10 @@ class DiskCache:
             try:
                 with open(path, "rb") as f:
                     data = pickle.load(f)
-            except Exception:
-                # Corrupt cache; remove it
+            except (pickle.UnpicklingError, OSError) as e:
+                # Corrupt cache; remove it and log the error
                 path.unlink(missing_ok=True)
+                print(f"Warning: Corrupted cache file {path} removed. Error: {e}")
                 return None
         if data.get("expires_at", 0) < time.time():
             path.unlink(missing_ok=True)
