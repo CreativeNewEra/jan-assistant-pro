@@ -432,6 +432,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ### Getting Help
 
 - 📖 Check our [Documentation](docs/)
+- 💡 Build API docs locally with `make html` in the `docs` directory
 - 🐛 Open an [Issue](https://github.com/CreativeNewEra/jan-assistant-pro/issues)
 - 💬 Start a [Discussion](https://github.com/CreativeNewEra/jan-assistant-pro/discussions)
 - 💝 Join our [Discord](https://discord.gg/your-discord-link)

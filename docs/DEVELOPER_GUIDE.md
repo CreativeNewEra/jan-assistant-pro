@@ -676,6 +676,7 @@ setup_logging(log_level="DEBUG", enable_console=True)
 - [REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md) - Architecture changes overview
 - [HIGH_IMPACT_IMPROVEMENTS_SUMMARY.md](HIGH_IMPACT_IMPROVEMENTS_SUMMARY.md) - Detailed improvement guide
 - [API Documentation](api_docs/) - Auto-generated API documentation
+  (run `make html` in the `docs/` directory to build)
 - [Examples](../examples/) - Example implementations and usage patterns
 
 For questions or support, please open an issue on GitHub or join our community discussions.
