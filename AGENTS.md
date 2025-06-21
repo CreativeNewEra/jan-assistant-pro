@@ -185,6 +185,7 @@ After using a tool, I'll provide the result and you can respond naturally to the
 - Run with minimal user privileges
 - Firewall rules should only allow Jan.ai communication
 - Keep dependencies updated
+- Run `safety check` during CI to detect vulnerable packages
 - Review allowed commands and paths regularly
 
 ## Future Roadmap

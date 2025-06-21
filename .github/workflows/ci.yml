@@ -16,9 +16,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
       - name: Install Poetry
         run: pip install poetry
       - name: Install dependencies
         run: poetry install --with dev
+      - name: Install safety
+        run: pip install safety
       - name: Run tests
         run: poetry run pytest -q
+      - name: Run security audit
+        run: poetry run safety check
