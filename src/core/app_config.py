@@ -118,19 +118,7 @@ class AppConfig:
     @staticmethod
     def _apply_env_overrides(config: "AppConfig") -> "AppConfig":
         data = asdict(config)
-        fields = [
-            "api.base_url",
-            "api.api_key",
-            "api.model",
-            "api.timeout",
-            "security.allowed_commands",
-            "security.restricted_paths",
-            "security.max_file_size",
-            "ui.theme",
-            "ui.window_size",
-            "ui.font_family",
-            "ui.font_size",
-        ]
+        fields = AppConfig._get_field_paths(AppConfig)
         for path in fields:
             env_key = ENV_PREFIX + path.replace(".", "_").upper()
             if env_key in os.environ:
