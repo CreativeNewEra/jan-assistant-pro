@@ -373,6 +373,30 @@ config = cfg.config_data
 }
 ```
 
+### Cache Management
+
+Jan Assistant Pro uses several caches to speed up operation:
+
+- **API cache** – stores recent API responses to avoid duplicate requests.
+- **Disk cache** – keeps temporary files so large downloads aren't repeated.
+- **Config cache** – holds parsed configuration for quick reloads.
+
+Configure cache sizes and expiration in `config/config.json`:
+
+```json
+"cache": {
+  "api_cache_size": 64,
+  "api_cache_ttl": 300,
+  "disk_cache_size": "500MB",
+  "disk_cache_ttl": 86400,
+  "config_cache_ttl": 60
+}
+```
+
+Set any value to `0` to disable caching. TTL values are in seconds.
+
+Clear caches by deleting `data/cache/*` and restarting the app.
+
 ## Logging
 
 ### Setup Logging

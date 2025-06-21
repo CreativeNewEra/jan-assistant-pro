@@ -131,6 +131,26 @@ Edit `config/config.json` to customize settings:
 
 Ensure `"ping"` is listed in `allowed_commands` if you want the network connectivity check to work.
 
+### Cache Management
+
+Jan Assistant Pro caches API responses, disk operations and configuration files
+to improve performance. Adjust cache sizes and expiration in `config/config.json`:
+
+```json
+"cache": {
+  "api_cache_size": 64,
+  "api_cache_ttl": 300,
+  "disk_cache_size": "500MB",
+  "disk_cache_ttl": 86400,
+  "config_cache_ttl": 60
+}
+```
+
+Set a value to `0` to disable a cache. TTL values are in seconds.
+
+To clear all caches, delete the contents of the `data/cache` directory and
+restart the application.
+
 ### Jan.ai Setup
 
 1. **Download and install** [Jan.ai](https://jan.ai)
