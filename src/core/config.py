@@ -117,7 +117,11 @@ class Config:
                 "restricted_paths": ["/etc", "/sys", "/proc"],
                 "max_file_size": "10MB",
             },
-            "cache": {"config": {"ttl": 300, "size": 4}},
+            "cache": {
+                "api": {"size": 128, "ttl": 300},
+                "disk": {"dir": "data/cache", "ttl": 3600},
+                "config": {"ttl": 300, "size": 4},
+            },
         }
 
     def _ensure_config_dir(self):

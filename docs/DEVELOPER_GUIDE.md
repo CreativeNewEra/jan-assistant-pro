@@ -385,11 +385,9 @@ Configure cache sizes and expiration in `config/config.json`:
 
 ```json
 "cache": {
-  "api_cache_size": 64,
-  "api_cache_ttl": 300,
-  "disk_cache_size": "500MB",
-  "disk_cache_ttl": 86400,
-  "config_cache_ttl": 60
+  "api": {"size": 64, "ttl": 300},
+  "disk": {"dir": "data/cache", "ttl": 86400},
+  "config": {"ttl": 60}
 }
 ```
 
