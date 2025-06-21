@@ -4,11 +4,13 @@ System command tools for Jan Assistant Pro
 
 import os
 import platform
+import re
 from typing import Any, Dict, List
 
 from src.core.cache import DiskCache
 from src.core.logging_config import get_logger
 from src.core.metrics import record_tool
+from src.core.utils import validate_input
 from src.tools.secure_command_executor import SecureCommandExecutor
 
 # ---------------------------------------------------------------------------
@@ -88,6 +90,12 @@ class SystemTools:
 
         return command.strip()
 
+    @validate_input({
+        "command": {
+            "pattern": re.compile(r"^[a-zA-Z0-9\s\-.]+$"),
+            "max_length": 100,
+        }
+    })
     @record_tool("run_command")
     def run_command(
         self,
