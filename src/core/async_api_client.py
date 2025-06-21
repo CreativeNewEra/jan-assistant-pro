@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 from typing import Any, Dict, List, Optional
 
 import aiohttp
@@ -11,6 +12,7 @@ import aiohttp
 from .cache import TTLCache
 from .circuit_breaker import CircuitBreaker
 from .exceptions import APIError
+from .metrics import api_calls, api_errors, api_latency
 
 
 class AsyncAPIClient:
@@ -102,6 +104,8 @@ class AsyncAPIClient:
                     self.breaker.after_call(True)
                 return cached
 
+        api_calls.inc()
+        start_time = time.perf_counter()
         try:
             async with session.post(url, json=payload, timeout=self.timeout) as resp:
                 try:
@@ -133,17 +137,22 @@ class AsyncAPIClient:
                     self.breaker.after_call(True)
                 return result
         except asyncio.TimeoutError as exc:
+            api_errors.inc()
             if self.breaker:
                 self.breaker.after_call(False)
             raise APIError("Request timed out") from exc
         except aiohttp.ClientError as exc:
+            api_errors.inc()
             if self.breaker:
                 self.breaker.after_call(False)
             raise APIError("Could not connect to API server. Is Jan running?") from exc
         except Exception as exc:
+            api_errors.inc()
             if self.breaker:
                 self.breaker.after_call(False)
             raise APIError(f"Unexpected error: {exc}") from exc
+        finally:
+            api_latency.observe(time.perf_counter() - start_time)
 
     async def get_models(self) -> List[Dict[str, Any]]:
         """Get list of available models."""
@@ -242,3 +251,13 @@ class AsyncAPIClient:
             "completion_tokens": usage.get("completion_tokens", 0),
             "total_tokens": usage.get("total_tokens", 0),
         }
+
+    async def close(self) -> None:
+        """Explicitly close the underlying HTTP session."""
+        if self.session and not self.session.closed:
+            try:
+                await self.session.close()
+            except Exception as exc:
+                # Log the exception (replace with actual logging if available)
+                print(f"Error while closing session: {exc}")
+        self.session = None
