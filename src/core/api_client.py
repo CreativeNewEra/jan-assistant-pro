@@ -7,6 +7,8 @@ import json
 import time
 from typing import Any, Dict, List, Optional
 
+from .cache import DiskCache, LRUCache
+
 from src.core.metrics import api_calls, api_errors, api_latency
 
 import httpx
@@ -15,12 +17,23 @@ import httpx
 class AsyncAPIClient:
     """Asynchronous client for interacting with OpenAI-compatible APIs."""
 
-    def __init__(self, base_url: str, api_key: str, model: str, timeout: int = 30):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        timeout: int = 30,
+        cache_size: int = 0,
+        cache_ttl: float = 60.0,
+        disk_cache: Optional[DiskCache] = None,
+    ):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
         self.session: Optional[httpx.AsyncClient] = None
+        self.cache = LRUCache(cache_size, cache_ttl) if cache_size > 0 else None
+        self.disk_cache = disk_cache
 
     def _create_session(self) -> httpx.AsyncClient:
         client = httpx.AsyncClient(timeout=self.timeout)
@@ -66,6 +79,18 @@ class AsyncAPIClient:
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
 
+        cache_key = json.dumps(payload, sort_keys=True)
+        if self.cache:
+            cached = self.cache.get(cache_key)
+            if cached is not None:
+                return cached
+        if self.disk_cache:
+            cached = self.disk_cache.get(cache_key)
+            if cached is not None:
+                if self.cache:
+                    self.cache.set(cache_key, cached)
+                return cached
+
         session = await self._ensure_session()
         api_calls.inc()
         start_time = time.perf_counter()
@@ -109,6 +134,10 @@ class AsyncAPIClient:
         finally:
             api_latency.observe(time.perf_counter() - start_time)
 
+        if self.cache:
+            self.cache.set(cache_key, result)
+        if self.disk_cache:
+            self.disk_cache.set(cache_key, result)
         return result
 
     async def get_models(self) -> List[Dict[str, Any]]:
@@ -170,14 +199,31 @@ class AsyncAPIClient:
 class APIClient:
     """Synchronous wrapper around :class:`AsyncAPIClient`."""
 
-    def __init__(self, base_url: str, api_key: str, model: str, timeout: int = 30):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        timeout: int = 30,
+        cache_size: int = 0,
+        cache_ttl: float = 60.0,
+        disk_cache_dir: Optional[str] = None,
+    ):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
 
+        disk_cache = DiskCache(disk_cache_dir, cache_ttl) if disk_cache_dir else None
+
         self._async_client = AsyncAPIClient(
-            base_url=base_url, api_key=api_key, model=model, timeout=timeout
+            base_url=base_url,
+            api_key=api_key,
+            model=model,
+            timeout=timeout,
+            cache_size=cache_size,
+            cache_ttl=cache_ttl,
+            disk_cache=disk_cache,
         )
 
     def __enter__(self) -> "APIClient":

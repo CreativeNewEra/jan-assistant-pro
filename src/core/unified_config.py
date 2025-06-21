@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -24,6 +25,7 @@ class UnifiedConfig:
         config_path: Optional[str] = None,
         env_file: Optional[str] = None,
         schema: Optional[ConfigValidator] = None,
+        reload_ttl: float = 0.0,
     ) -> None:
         if env_file:
             load_dotenv(env_file, override=True)
@@ -39,12 +41,16 @@ class UnifiedConfig:
         )
         self.validator = schema or ConfigValidator()
         self.config_data: Dict[str, Any] = {}
+        self.reload_ttl = reload_ttl
+        self._last_loaded = 0.0
         self.reload()
 
     def _find_config_path(self) -> str:
         possible_paths = [
             os.path.join(os.getcwd(), "config", "config.json"),
-            os.path.join(Path(__file__).resolve().parent.parent, "config", "config.json"),
+            os.path.join(
+                Path(__file__).resolve().parent.parent, "config", "config.json"
+            ),
             os.path.expanduser("~/.jan-assistant-pro/config.json"),
         ]
         for path in possible_paths:
@@ -101,6 +107,7 @@ class UnifiedConfig:
     # ------------------------------------------------------------------
     def reload(self) -> None:
         self.config_data = self._load_config()
+        self._last_loaded = time.time()
 
     def _load_config(self) -> Dict[str, Any]:
         if os.path.exists(self.config_path):
@@ -162,6 +169,8 @@ class UnifiedConfig:
     # Public API
     # ------------------------------------------------------------------
     def get(self, key_path: str, default: Any = None) -> Any:
+        if self.reload_ttl and time.time() - self._last_loaded > self.reload_ttl:
+            self.reload()
         keys = key_path.split(".")
         value: Any = self.config_data
         for key in keys:

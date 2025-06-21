@@ -6,13 +6,18 @@ import pytest
 from src.core.api_client import APIClient, APIError
 
 
-def _create_client():
-    return APIClient(base_url="http://test", api_key="key", model="model")
+def _create_client(tmp_path=None):
+    kwargs = {}
+    if tmp_path is not None:
+        kwargs = {"cache_size": 2, "cache_ttl": 1, "disk_cache_dir": str(tmp_path)}
+    return APIClient(base_url="http://test", api_key="key", model="model", **kwargs)
 
 
 def test_chat_completion_success():
     messages = [{"role": "user", "content": "hi"}]
-    async_mock = AsyncMock(return_value={"choices": [{"message": {"content": "hello"}}]})
+    async_mock = AsyncMock(
+        return_value={"choices": [{"message": {"content": "hello"}}]}
+    )
     with _create_client() as client:
         with patch.object(client._async_client, "chat_completion", async_mock):
             response = client.chat_completion(messages)
@@ -44,3 +49,28 @@ def test_chat_completion_connection_error():
                 client.chat_completion(messages)
         assert "Could not connect" in str(exc.value)
     assert client._async_client.session is None
+
+
+def test_chat_completion_cache(tmp_path):
+    messages = [{"role": "user", "content": "hi"}]
+    with _create_client(tmp_path) as client:
+
+        class FakeResp:
+            def __init__(self, data):
+                self._data = data
+
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return self._data
+
+        fake_resp = FakeResp({"choices": [{"message": {"content": "cached"}}]})
+
+        with patch.object(
+            client._async_client.session, "post", return_value=fake_resp
+        ) as post:
+            resp1 = client.chat_completion(messages)
+            resp2 = client.chat_completion(messages)
+            post.assert_called_once()
+        assert resp1 == resp2

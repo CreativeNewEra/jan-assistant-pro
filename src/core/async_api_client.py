@@ -3,22 +3,36 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import time
 from typing import Any, Dict, List, Optional
 
 import aiohttp
 
 from .exceptions import APIError
+from .cache import DiskCache, LRUCache
 
 
 class AsyncAPIClient:
     """Async client for interacting with OpenAI-compatible APIs."""
 
-    def __init__(self, base_url: str, api_key: str, model: str, timeout: int = 30):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        timeout: int = 30,
+        cache_size: int = 0,
+        cache_ttl: float = 60.0,
+        disk_cache: Optional[DiskCache] = None,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
         self.session: Optional[aiohttp.ClientSession] = None
+        self.cache = LRUCache(cache_size, cache_ttl) if cache_size > 0 else None
+        self.disk_cache = disk_cache
 
     async def __aenter__(self) -> "AsyncAPIClient":
         if self.session is None or self.session.closed:
@@ -64,6 +78,18 @@ class AsyncAPIClient:
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
 
+        cache_key = json.dumps(payload, sort_keys=True)
+        if self.cache:
+            cached = self.cache.get(cache_key)
+            if cached is not None:
+                return cached
+        if self.disk_cache:
+            cached = self.disk_cache.get(cache_key)
+            if cached is not None:
+                if self.cache:
+                    self.cache.set(cache_key, cached)
+                return cached
+
         try:
             async with session.post(url, json=payload, timeout=self.timeout) as resp:
                 try:
@@ -88,7 +114,12 @@ class AsyncAPIClient:
                         raise APIError("API endpoint not found. Check your base URL.")
                     raise APIError(f"HTTP {resp.status}: {error_detail}")
 
-                return await resp.json()
+                result = await resp.json()
+                if self.cache:
+                    self.cache.set(cache_key, result)
+                if self.disk_cache:
+                    self.disk_cache.set(cache_key, result)
+                return result
         except asyncio.TimeoutError as exc:
             raise APIError("Request timed out") from exc
         except aiohttp.ClientError as exc:
