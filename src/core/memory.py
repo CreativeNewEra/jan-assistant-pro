@@ -2,16 +2,17 @@
 Memory management system for Jan Assistant Pro
 """
 
-from contextlib import contextmanager
-from datetime import datetime
 import json
 import os
-from pathlib import Path
 import sqlite3
 import threading
+from contextlib import contextmanager
+from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .logging_config import get_logger
+from .utils import thread_safe
 
 
 class MemoryManager:
@@ -63,7 +64,7 @@ class MemoryManager:
         Returns:
             True if loaded successfully, False otherwise
         """
-        with self._lock:
+        with thread_safe(self._lock):
             try:
                 if os.path.exists(self.memory_file):
                     with open(self.memory_file, "r", encoding="utf-8") as f:
@@ -87,7 +88,7 @@ class MemoryManager:
         Returns:
             True if saved successfully, False otherwise
         """
-        with self._lock:
+        with thread_safe(self._lock):
             try:
                 # Clean up old entries if we exceed max_entries
                 if len(self.memory_data) > self.max_entries:
@@ -130,7 +131,7 @@ class MemoryManager:
         Returns:
             True if stored successfully
         """
-        with self._lock:
+        with thread_safe(self._lock):
             try:
                 self.memory_data[key] = {
                     "value": value,
@@ -160,7 +161,7 @@ class MemoryManager:
         Returns:
             Memory entry dictionary or None if not found
         """
-        with self._lock:
+        with thread_safe(self._lock):
             if key in self.memory_data:
                 # Update access count
                 self.memory_data[key]["access_count"] += 1
@@ -186,7 +187,7 @@ class MemoryManager:
         search_term = search_term.lower().strip()
         matches = []
 
-        with self._lock:
+        with thread_safe(self._lock):
             for key, memory in self.memory_data.items():
                 key_lower = key.lower()
                 value_lower = memory["value"].lower()
@@ -213,7 +214,7 @@ class MemoryManager:
         Returns:
             True if removed successfully
         """
-        with self._lock:
+        with thread_safe(self._lock):
             if key in self.memory_data:
                 del self.memory_data[key]
 
@@ -236,7 +237,7 @@ class MemoryManager:
         Returns:
             List of (key, memory) tuples
         """
-        with self._lock:
+        with thread_safe(self._lock):
             memories = []
 
             for key, memory in self.memory_data.items():
@@ -258,7 +259,7 @@ class MemoryManager:
         Returns:
             List of category names
         """
-        with self._lock:
+        with thread_safe(self._lock):
             categories = set()
             for memory in self.memory_data.values():
                 categories.add(memory.get("category", "general"))
@@ -271,7 +272,7 @@ class MemoryManager:
         Returns:
             Dictionary with memory statistics
         """
-        with self._lock:
+        with thread_safe(self._lock):
             if not self.memory_data:
                 return {
                     "total_entries": 0,
@@ -311,7 +312,7 @@ class MemoryManager:
         Returns:
             True if cleared successfully
         """
-        with self._lock:
+        with thread_safe(self._lock):
             try:
                 self.memory_data = {}
                 if self.auto_save:
@@ -360,7 +361,7 @@ class MemoryManager:
             with open(file_path, "r", encoding="utf-8") as f:
                 imported_data = json.load(f)
 
-            with self._lock:
+            with thread_safe(self._lock):
                 if merge:
                     self.memory_data.update(imported_data)
                 else:
@@ -418,7 +419,7 @@ class EnhancedMemoryManager:
     @contextmanager
     def _get_connection(self):
         """Thread-safe database connection"""
-        with self._lock:
+        with thread_safe(self._lock):
             conn = sqlite3.connect(self.db_path, timeout=30.0)
             conn.row_factory = sqlite3.Row
             try:

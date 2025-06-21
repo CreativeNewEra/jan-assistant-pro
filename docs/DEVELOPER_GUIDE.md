@@ -513,6 +513,21 @@ class MyToolError(JanAssistantError):
 3. **Async Operations**: Use threading for I/O operations
 4. **Memory Management**: Clean up resources properly
 
+### Thread Safety Helpers
+
+Use the `thread_safe` context manager from `src.core.utils` to simplify locking:
+
+```python
+from src.core.utils import thread_safe
+
+with thread_safe(my_lock):
+    # critical section
+    perform_work()
+```
+
+`thread_safe` acquires the given lock and releases it even if an exception is
+raised within the block.
+
 ### Security
 
 1. **Input Validation**: Validate all user inputs
