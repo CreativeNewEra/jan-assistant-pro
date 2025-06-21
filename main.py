@@ -36,7 +36,7 @@ def main():
         config = Config()
 
         # Start metrics server
-        start_metrics_server()
+        start_metrics_server(bind_address="localhost")
 
         # Create and run GUI
         app = JanAssistantGUI(config)
