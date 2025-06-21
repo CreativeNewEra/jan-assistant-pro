@@ -20,5 +20,11 @@ jobs:
         run: pip install poetry
       - name: Install dependencies
         run: poetry install --with dev
+      - name: Run Bandit
+        if: github.event_name == 'pull_request'
+        run: poetry run bandit -r src/
+      - name: Run Safety
+        if: github.event_name == 'pull_request'
+        run: poetry run safety check
       - name: Run tests
         run: poetry run pytest -q
