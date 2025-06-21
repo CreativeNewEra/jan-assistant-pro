@@ -69,7 +69,9 @@ class FileWriteCommand(Command):
             try:
                 with open(path, "r", encoding=encoding) as f:
                     self._prev_content = f.read()
-            except Exception:
+            except Exception as e:
+                import logging
+                logging.error(f"Failed to read file {path}: {e}", exc_info=True)
                 self._prev_content = ""
 
     def execute(self) -> Any:
