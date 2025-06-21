@@ -1,7 +1,7 @@
 """GUI widget enhancements for Jan Assistant Pro."""
 
-from datetime import datetime
 import tkinter as tk
+from datetime import datetime
 from tkinter import ttk
 
 
@@ -10,9 +10,12 @@ class StatusBar(tk.Frame):
 
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        bg = kwargs.get("bg", master["bg"] if isinstance(master, tk.Widget) else "white")
+        bg = kwargs.get(
+            "bg", master["bg"] if isinstance(master, tk.Widget) else "white"
+        )
         self.configure(bg=bg)
 
+        # Using U+25CF (BLACK CIRCLE) to represent the connection indicator.
         self.indicator = tk.Label(self, text="\u25CF", fg="#ff0000", bg=bg)
         self.indicator.pack(side=tk.LEFT, padx=(0, 5))
 
@@ -22,17 +25,43 @@ class StatusBar(tk.Frame):
         self.progress = ttk.Progressbar(self, mode="indeterminate", length=80)
         self.progress_running = False
 
-    def set_status(self, text: str, color: str = "#00ff00", progress: bool = False) -> None:
-        """Update the status text and optionally show progress."""
+    def set_status(
+        self,
+        text: str,
+        color: str = "#00ff00",
+        progress: bool | tuple[int, int] = False,
+    ) -> None:
+        """Update the status text and optionally show progress.
+
+        The ``progress`` argument accepts either ``True``/``False`` to toggle an
+        indeterminate progress bar, or a ``(value, maximum)`` tuple to show
+        determinate progress.
+        """
+
         self.label.config(text=text, fg=color)
-        if progress and not self.progress_running:
-            self.progress.pack(side=tk.RIGHT, padx=5)
-            self.progress.start()
-            self.progress_running = True
-        elif not progress and self.progress_running:
-            self.progress.stop()
-            self.progress.pack_forget()
-            self.progress_running = False
+
+        if progress is True:
+            if not self.progress_running or self.progress["mode"] != "indeterminate":
+                self.progress.config(mode="indeterminate")
+                self.progress.pack(side=tk.RIGHT, padx=5)
+                self.progress.start()
+                self.progress_running = True
+        elif isinstance(progress, tuple):
+            value, maximum = progress
+            if not self.progress_running or self.progress["mode"] != "determinate":
+                self.progress.config(mode="determinate", maximum=maximum)
+                self.progress.pack(side=tk.RIGHT, padx=5)
+                self.progress_running = True
+            self.progress["value"] = value
+            if value >= maximum:
+                self.progress.pack_forget()
+                self.progress_running = False
+        else:
+            if self.progress_running:
+                self.progress.stop()
+                self.progress.pack_forget()
+                self.progress_running = False
+
         self.update_idletasks()
 
     def set_connected(self, connected: bool) -> None:

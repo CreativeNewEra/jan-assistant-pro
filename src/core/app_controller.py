@@ -3,21 +3,20 @@ Application Controller for Jan Assistant Pro
 Handles the main application logic, decoupling it from the GUI.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
-from src.core.logging_config import LoggerMixin
-
-from src.core.config import Config
 from src.core.api_client import APIClient, APIError
 from src.core.circuit_breaker import CircuitBreaker
+from src.core.config import Config
+from src.core.history import (
+    FileWriteCommand,
+    MemoryRememberCommand,
+    UndoRedoManager,
+)
+from src.core.logging_config import LoggerMixin
 from src.core.memory import MemoryManager
 from src.tools.file_tools import FileTools
 from src.tools.system_tools import SystemTools
-from src.core.history import (
-    UndoRedoManager,
-    FileWriteCommand,
-    MemoryRememberCommand,
-)
 
 
 class AppController(LoggerMixin):
@@ -63,18 +62,27 @@ class AppController(LoggerMixin):
         # History manager for undo/redo
         self.history = UndoRedoManager()
 
-    def process_message(self, message: str) -> Dict[str, Any]:
+    def process_message(
+        self,
+        message: str,
+        *,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> Dict[str, Any]:
         """
         Processes a user message, interacts with the API and tools,
         and returns the response.
         """
         try:
-            response = self._chat_with_tools(message)
+            response = self._chat_with_tools(message, progress_callback)
             return {"type": "assistant", "content": response}
         except Exception as e:
             return {"type": "error", "content": f"Error: {str(e)}"}
 
-    def _chat_with_tools(self, message: str) -> str:
+    def _chat_with_tools(
+        self,
+        message: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> str:
         """Chat with tools available"""
         system_message = self._get_system_prompt()
 
@@ -99,7 +107,7 @@ class AppController(LoggerMixin):
             )
 
         if "TOOL_" in response:
-            tool_result = self._handle_tool_call(response)
+            tool_result = self._handle_tool_call(response, progress_callback)
 
             messages.append({"role": "assistant", "content": response})
             messages.append(
@@ -135,7 +143,11 @@ class AppController(LoggerMixin):
             self.conversation_history.append({"role": "assistant", "content": response})
             return response
 
-    def _handle_tool_call(self, response: str) -> str:
+    def _handle_tool_call(
+        self,
+        response: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> str:
         """Handle tool calls"""
         response = response.strip()
 
@@ -159,7 +171,9 @@ class AppController(LoggerMixin):
 
         elif "TOOL_LIST_FILES:" in response:
             directory = response.split("TOOL_LIST_FILES:")[1].strip() or "."
-            result = self.file_tools.list_files(directory)
+            result = self.file_tools.list_files(
+                directory, progress_callback=progress_callback
+            )
             formatted = self._format_tool_result(result)
             self.last_tool_result = formatted
             return formatted
@@ -168,7 +182,9 @@ class AppController(LoggerMixin):
             parts = response.split("TOOL_COPY_FILE:")[1].strip().split("|", 1)
             if len(parts) >= 2:
                 source, destination = parts[0].strip(), parts[1].strip()
-                result = self.file_tools.copy_file(source, destination)
+                result = self.file_tools.copy_file(
+                    source, destination, progress_callback=progress_callback
+                )
                 formatted = self._format_tool_result(result)
                 self.last_tool_result = formatted
                 return formatted

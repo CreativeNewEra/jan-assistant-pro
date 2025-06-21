@@ -125,3 +125,33 @@ def test_list_files_disk_cache(tmp_path):
     (tmp_path / "c.txt").write_text("3")
     result_clear = tools.list_files(str(tmp_path), clear_cache=True)
     assert result_clear["total_files"] == 3
+
+
+def test_copy_file_progress_callback(tmp_path):
+    tools = FileTools()
+    src = tmp_path / "src.txt"
+    dst = tmp_path / "dst.txt"
+    src.write_bytes(b"x" * 2048)
+    calls = []
+
+    def progress(current, total):
+        calls.append((current, total))
+
+    tools.copy_file(str(src), str(dst), progress_callback=progress)
+    assert dst.exists()
+    assert calls
+    assert calls[-1][0] == calls[-1][1]
+
+
+def test_list_files_progress_callback(tmp_path):
+    tools = FileTools()
+    for i in range(3):
+        (tmp_path / f"f{i}.txt").write_text("x")
+    calls = []
+
+    def progress(current, total):
+        calls.append((current, total))
+
+    tools.list_files(str(tmp_path), progress_callback=progress, use_cache=False)
+    assert calls
+    assert calls[-1][0] == calls[-1][1]
