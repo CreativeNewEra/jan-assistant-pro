@@ -345,7 +345,8 @@ class FileTools:
             cache_key = f"list:{Path(directory).resolve()}:{pattern}:{include_hidden}"
             if clear_cache and self.disk_cache:
                 self.disk_cache.delete(cache_key)
-            if use_cache and self.disk_cache and not clear_cache:
+            should_use_cache = use_cache and self.disk_cache and not clear_cache
+            if should_use_cache:
                 cached = self.disk_cache.get(cache_key)
                 if cached is not None:
                     return cached
