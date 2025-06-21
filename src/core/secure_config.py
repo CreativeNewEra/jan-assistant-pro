@@ -34,7 +34,7 @@ class SecureConfig(Config):
 
         key = self._prompt_for_key()
         try:
-            keyring.set_password("jan-assistant", "api-key", key)
+            keyring.set_password(self.SERVICE_NAME, self.USERNAME, key)
         except KeyringError:
             pass
         return key
