@@ -59,7 +59,7 @@ def test_retry_backoff_timing():
     def fake_sleep(dur):
         sleep_durations.append(dur)
 
-    with patch('time.sleep', side_effect=fake_sleep):
+    with patch('src.core.retry.time.sleep', side_effect=fake_sleep):
         result = fail_then_succeed(counter)
     assert result == 'done'
     assert sleep_durations == [0.1, 0.2]
