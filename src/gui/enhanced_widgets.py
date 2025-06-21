@@ -15,7 +15,8 @@ class StatusBar(tk.Frame):
         )
         self.configure(bg=bg)
 
-        self.indicator = tk.Label(self, text="\u25cf", fg="#ff0000", bg=bg)
+        # Using U+25CF (BLACK CIRCLE) to represent the connection indicator.
+        self.indicator = tk.Label(self, text="\u25CF", fg="#ff0000", bg=bg)
         self.indicator.pack(side=tk.LEFT, padx=(0, 5))
 
         self.label = tk.Label(self, text="Ready", anchor="w", fg="#00ff00", bg=bg)
