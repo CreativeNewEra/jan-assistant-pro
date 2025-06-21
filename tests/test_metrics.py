@@ -13,17 +13,17 @@ class Dummy:
 
 def test_tool_counters_increment():
     d = Dummy()
-    before = tool_calls.labels(tool="demo")._value.get()
+    before = next(sample.value for sample in tool_calls.collect()[0].samples if sample.labels["tool"] == "demo")
     d.ok()
-    after = tool_calls.labels(tool="demo")._value.get()
+    after = next(sample.value for sample in tool_calls.collect()[0].samples if sample.labels["tool"] == "demo")
     assert after == before + 1
 
 
 def test_tool_errors_increment():
     d = Dummy()
-    before = tool_errors.labels(tool="demo")._value.get()
+    before = next(sample.value for sample in tool_errors.collect()[0].samples if sample.labels["tool"] == "demo")
     d.fail()
-    after = tool_errors.labels(tool="demo")._value.get()
+    after = next(sample.value for sample in tool_errors.collect()[0].samples if sample.labels["tool"] == "demo")
     assert after == before + 1
 
 
