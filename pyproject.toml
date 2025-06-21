@@ -57,3 +57,5 @@ disallow_incomplete_defs = true
 minversion = "7.0"
 addopts = "-ra"
 testpaths = ["tests"]
+markers = ["asyncio"]
+asyncio_mode = "auto"
