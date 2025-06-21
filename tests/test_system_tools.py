@@ -2,6 +2,10 @@ from unittest.mock import patch
 
 import platform
 import time
+import pytest
+
+pytest.importorskip("psutil")
+
 from src.core.unified_config import UnifiedConfig
 from src.tools.system_tools import SystemTools
 

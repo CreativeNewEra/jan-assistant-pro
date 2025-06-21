@@ -117,6 +117,10 @@ python -m pytest tests/ --cov=src/
 python -m pytest tests/test_api_client.py
 ```
 
+Some tests rely on optional packages like `psutil` (system metrics) and
+`tkinter` (GUI widgets). If these modules are not installed, pytest will skip
+the corresponding tests automatically.
+
 ### Writing Tests
 
 - Place tests in the `tests/` directory
