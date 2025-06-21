@@ -2,6 +2,10 @@ from unittest.mock import patch
 
 import platform
 import time
+import pytest
+
+pytest.importorskip("psutil", reason="psutil is required for system metrics tests")
+
 from src.core.unified_config import UnifiedConfig
 from src.tools.system_tools import SystemTools
 

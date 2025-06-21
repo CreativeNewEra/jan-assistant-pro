@@ -1,7 +1,9 @@
 import os
 import sys
-import tkinter as tk
 import unittest
+import pytest
+
+tk = pytest.importorskip("tkinter", reason="required for GUI widget tests")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
