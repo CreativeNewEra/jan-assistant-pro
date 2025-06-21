@@ -5,6 +5,8 @@ Provides structured error handling throughout the application
 
 from typing import Any, Dict, Optional
 
+from .user_friendly_error import UserFriendlyError
+
 from .error_reporter import record_error
 
 
@@ -145,6 +147,31 @@ class ResourceError(JanAssistantError):
         })
 
 
+def to_user_friendly_error(exc: Exception) -> UserFriendlyError:
+    """Convert an exception into a UserFriendlyError instance."""
+    if isinstance(exc, JanAssistantError):
+        message = exc.message
+    else:
+        message = str(exc)
+
+    suggestions: list[str] = []
+    doc_link: str | None = None
+    if isinstance(exc, PermissionError) or (
+        isinstance(exc, FileOperationError) and isinstance(exc.__cause__, PermissionError)
+    ):
+        suggestions = [
+            "Check file or directory permissions",
+            "Try a different path",
+        ]
+        doc_link = "https://example.com/docs/errors#permissions"
+    return UserFriendlyError(
+        cause=exc.__class__.__name__,
+        user_message=message,
+        suggestions=suggestions,
+        documentation_link=doc_link,
+    )
+
+
 def handle_exception(exc: Exception) -> Dict[str, Any]:
     """
     Convert any exception to a standardized error response
@@ -157,23 +184,22 @@ def handle_exception(exc: Exception) -> Dict[str, Any]:
     """
     record_error(exc)
     if isinstance(exc, JanAssistantError):
-        return {
-            'success': False,
-            'error': exc.to_dict()
-        }
+        error_dict = exc.to_dict()
     else:
-        # Handle unexpected exceptions
-        return {
-            'success': False,
-            'error': {
-                'error_type': 'UnexpectedError',
-                'error_code': 'UNEXPECTED_ERROR',
-                'message': str(exc),
-                'context': {
-                    'exception_type': exc.__class__.__name__
-                }
+        error_dict = {
+            'error_type': 'UnexpectedError',
+            'error_code': 'UNEXPECTED_ERROR',
+            'message': str(exc),
+            'context': {
+                'exception_type': exc.__class__.__name__
             }
         }
+
+    return {
+        'success': False,
+        'error': error_dict,
+        'user_error': to_user_friendly_error(exc).to_dict(),
+    }
 
 
 def create_error_response(message: str, error_code: str = None, 
@@ -196,5 +222,11 @@ def create_error_response(message: str, error_code: str = None,
             'error_code': error_code or 'GENERIC_ERROR',
             'message': message,
             'context': context or {}
-        }
+        },
+        'user_error': UserFriendlyError(
+            cause='GenericError',
+            user_message=message,
+            suggestions=[],
+            documentation_link=None,
+        ).to_dict(),
     }
