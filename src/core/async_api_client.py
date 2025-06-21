@@ -56,6 +56,8 @@ class AsyncAPIClient:
         try:
             if self.session and not self.session.closed:
                 await self.session.close()
+        except Exception as e:
+            logging.error("Exception occurred while closing the session: %s", e, exc_info=True)
         finally:
             self.session = None  # Always cleanup reference
 
