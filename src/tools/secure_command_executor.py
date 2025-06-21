@@ -11,6 +11,12 @@ from typing import Any, Dict, List, Optional
 
 from src.core.logging_config import get_logger
 
+# ---------------------------------------------------------------------------
+# Default command whitelists
+# ---------------------------------------------------------------------------
+SAFE_INFO_COMMANDS = ["ls", "pwd", "date", "whoami", "echo"]
+SAFE_READ_COMMANDS = ["cat", "head", "tail", "grep"]  # Still dangerous!
+
 try:
     import resource
 except Exception:  # pragma: no cover
@@ -28,7 +34,10 @@ class SecureCommandExecutor:
         max_output_bytes: int = 10_000,
         work_dir: Optional[str] = None,
     ) -> None:
-        self.allowed_commands = allowed_commands or ["ls", "pwd", "echo", "cat", "ping"]
+        # Use a restricted set of safe default commands if none provided
+        self.allowed_commands = (
+            allowed_commands or SAFE_INFO_COMMANDS + SAFE_READ_COMMANDS
+        )
         self.blocked_commands = blocked_commands or ["rm", "shutdown", "reboot"]
         self.timeout = timeout
         self.max_output_bytes = max_output_bytes

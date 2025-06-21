@@ -126,13 +126,13 @@ Edit `config/config.json` to customize settings:
     "window_size": "800x600"
   },
   "security": {
-    "allowed_commands": ["ls", "pwd", "python3", "ping"],
+    "allowed_commands": ["ls", "pwd", "date", "whoami", "echo", "cat", "head", "tail", "grep"],
     "restricted_paths": ["/etc", "/sys"]
   }
 }
 ```
 
-Ensure `"ping"` is listed in `allowed_commands` if you want the network connectivity check to work.
+To enable the network connectivity check, add `"ping"` to `allowed_commands`.
 
 ### Cache Management
 

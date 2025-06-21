@@ -1,13 +1,15 @@
 import os
 import sys
 import unittest
+
 import pytest
 
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
+from src.gui.enhanced_widgets import ChatInput, StatusBar  # noqa: E402
+
 tk = pytest.importorskip("tkinter", reason="required for GUI widget tests")
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-
-from src.gui.enhanced_widgets import ChatInput, StatusBar
 
 
 def create_root_or_skip():

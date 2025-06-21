@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict, List, Optional
-
-from .cache import TTLCache
-from .circuit_breaker import CircuitBreaker
 import json
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from .cache import TTLCache
+from .circuit_breaker import CircuitBreaker
 from .exceptions import APIError
 
 
@@ -201,7 +200,7 @@ class AsyncAPIClient:
 
         try:
             start = asyncio.get_event_loop().time()
-            response = await self.chat_completion([{"role": "user", "content": "ping"}])
+            await self.chat_completion([{"role": "user", "content": "ping"}])
             end = asyncio.get_event_loop().time()
             status["latency_ms"] = round((end - start) * 1000, 2)
             status["connected"] = True
