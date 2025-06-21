@@ -28,13 +28,13 @@ class SecureConfig(Config):
             key = keyring.get_password("jan-assistant", "api-key")
             if key:
                 return key
-        except Exception:
+        except KeyringError:
             # Fall back to prompt if keyring fails
             key = None
 
         key = self._prompt_for_key()
         try:
             keyring.set_password("jan-assistant", "api-key", key)
-        except Exception:
+        except KeyringError:
             pass
         return key
