@@ -22,14 +22,14 @@ class PluginLoader:
         if not path.exists():
             return 0
         count = 0
-        for file in path.glob("*.py"):
-            module_name = file.stem
-            spec = importlib.util.spec_from_file_location(module_name, file)
+        for plugin_file in path.glob("*.py"):
+            module_name = plugin_file.stem
+            spec = importlib.util.spec_from_file_location(module_name, plugin_file)
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 sys.modules[module_name] = module
                 spec.loader.exec_module(module)
                 count += self.registry.auto_discover_tools(module_name)
                 if self.event_manager:
-                    self.event_manager.emit("plugin_loaded", name=module_name, path=str(file))
+                    self.event_manager.emit("plugin_loaded", name=module_name, path=str(plugin_file))
         return count
