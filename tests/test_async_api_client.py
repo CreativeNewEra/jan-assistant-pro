@@ -10,24 +10,9 @@ from src.core.exceptions import APIError
 from src.core.circuit_breaker import CircuitBreaker
 
 
-def _create_client():
-    return AsyncAPIClient(base_url="http://test", api_key="key", model="model")
-
-
-def _create_cached_client():
-    return AsyncAPIClient(
-        base_url="http://test",
-        api_key="key",
-        model="model",
-        cache_enabled=True,
-        cache_ttl=60,
-        cache_size=10,
-    )
-
-
 @pytest.mark.asyncio
-async def test_chat_completion_success():
-    client = _create_client()
+async def test_chat_completion_success(async_api_client):
+    client = async_api_client
     messages = [{"role": "user", "content": "hi"}]
     async with client:
         mock_resp = AsyncMock()
@@ -47,8 +32,8 @@ async def test_chat_completion_success():
 
 
 @pytest.mark.asyncio
-async def test_chat_completion_timeout():
-    client = _create_client()
+async def test_chat_completion_timeout(async_api_client):
+    client = async_api_client
     messages = [{"role": "user", "content": "hi"}]
     async with client:
         with patch.object(client.session, "post", side_effect=asyncio.TimeoutError):
@@ -57,8 +42,8 @@ async def test_chat_completion_timeout():
 
 
 @pytest.mark.asyncio
-async def test_chat_completion_client_error():
-    client = _create_client()
+async def test_chat_completion_client_error(async_api_client):
+    client = async_api_client
     messages = [{"role": "user", "content": "hi"}]
     async with client:
         with patch.object(client.session, "post", side_effect=aiohttp.ClientError):
@@ -67,8 +52,8 @@ async def test_chat_completion_client_error():
 
 
 @pytest.mark.asyncio
-async def test_get_models_success():
-    client = _create_client()
+async def test_get_models_success(async_api_client):
+    client = async_api_client
     async with client:
         mock_resp = AsyncMock()
         mock_resp.status = 200
@@ -84,16 +69,16 @@ async def test_get_models_success():
 
 
 @pytest.mark.asyncio
-async def test_health_check_failure():
-    client = _create_client()
+async def test_health_check_failure(async_api_client):
+    client = async_api_client
     with patch.object(client, "chat_completion", side_effect=APIError("fail")):
         result = await client.health_check()
     assert result is False
 
 
 @pytest.mark.asyncio
-async def test_chat_completion_cached():
-    client = _create_cached_client()
+async def test_chat_completion_cached(cached_async_api_client):
+    client = cached_async_api_client
     messages = [{"role": "user", "content": "hi"}]
     async with client:
         mock_resp = AsyncMock()
@@ -112,8 +97,8 @@ async def test_chat_completion_cached():
 
 
 @pytest.mark.asyncio
-async def test_get_models_cached():
-    client = _create_cached_client()
+async def test_get_models_cached(cached_async_api_client):
+    client = cached_async_api_client
     async with client:
         mock_resp = AsyncMock()
         mock_resp.status = 200
@@ -129,8 +114,8 @@ async def test_get_models_cached():
 
 
 @pytest.mark.asyncio
-async def test_clear_api_cache():
-    client = _create_cached_client()
+async def test_clear_api_cache(cached_async_api_client):
+    client = cached_async_api_client
     async with client:
         client._cache["x"] = {"data": 1}
         assert len(client._cache) == 1
