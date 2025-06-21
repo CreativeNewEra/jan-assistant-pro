@@ -26,3 +26,4 @@ class AsyncGUIBridge:
         """Stop the event loop and wait for the thread to exit."""
         self.loop.call_soon_threadsafe(self.loop.stop)
         self.thread.join(timeout=5)
+        self.loop.close()
