@@ -384,13 +384,20 @@ We follow [Semantic Versioning](https://semver.org/):
 - **MINOR**: New features (backward compatible)
 - **PATCH**: Bug fixes (backward compatible)
 
-### Release Checklist
+### Automated Releases
 
-- [ ] Update version in `setup.py`
-- [ ] Update `CHANGELOG.md`
-- [ ] Create release notes
-- [ ] Tag release: `git tag v0.1.0`
-- [ ] Push tags: `git push --tags`
+Releases are managed by the `release-please` GitHub Action. Version numbers and
+changelogs are generated from commit messages using the Conventional Commits
+specification (`feat:`, `fix:` and so on). Whenever changes are merged into the
+`main` branch, the workflow creates or updates a release PR. Once merged,
+`release-please` tags the commit and publishes the changelog automatically.
+
+To ensure your changes appear correctly in the changelog, write commit messages
+using the Conventional Commits style. Example:
+
+```bash
+git commit -m "feat: add amazing new tool"
+```
 
 ## 🤝 Community
 

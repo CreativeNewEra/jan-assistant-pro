@@ -37,6 +37,7 @@ config/config.json
 # Data
 data/
 *.json
+!release-please-config.json
 !config/config.example.json
 
 # Logs
