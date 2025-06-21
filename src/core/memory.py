@@ -41,6 +41,15 @@ class MemoryManager:
         # Load existing memory
         self.load_memory()
 
+    def __enter__(self) -> "MemoryManager":
+        """Load memory when entering a context."""
+        self.load_memory()
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        """Save memory when exiting a context."""
+        self.save_memory()
+
     def _ensure_memory_dir(self):
         """Ensure the memory directory exists"""
         memory_dir = os.path.dirname(self.memory_file)
