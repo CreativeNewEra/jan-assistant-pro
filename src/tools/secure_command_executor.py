@@ -32,12 +32,27 @@ class SecureCommandExecutor:
         self.blocked_commands = blocked_commands or ["rm", "shutdown", "reboot"]
         self.timeout = timeout
         self.max_output_bytes = max_output_bytes
-        self.base_work_dir = work_dir or tempfile.mkdtemp(prefix="jan_sandbox_")
+        self._base_temp_dir: Optional[tempfile.TemporaryDirectory] = None
+        if work_dir:
+            self.base_work_dir = work_dir
+        else:
+            self._base_temp_dir = tempfile.TemporaryDirectory(prefix="jan_sandbox_")
+            self.base_work_dir = self._base_temp_dir.name
         os.makedirs(self.base_work_dir, exist_ok=True)
         self.logger = get_logger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
             {"timeout": self.timeout, "work_dir": self.base_work_dir},
         )
+
+    def __enter__(self) -> "SecureCommandExecutor":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        if self._base_temp_dir is not None:
+            try:
+                self._base_temp_dir.cleanup()
+            except Exception:  # pragma: no cover - best effort
+                pass
 
     def _command_name(self, command: str) -> str:
         parts = shlex.split(command)
@@ -86,8 +101,13 @@ class SecureCommandExecutor:
         if error:
             return {"success": False, "error": error}
 
-        exec_dir = work_dir or tempfile.mkdtemp(dir=self.base_work_dir)
-        os.makedirs(exec_dir, exist_ok=True)
+        if work_dir:
+            exec_dir_obj = None
+            exec_dir = work_dir
+            os.makedirs(exec_dir, exist_ok=True)
+        else:
+            exec_dir_obj = tempfile.TemporaryDirectory(dir=self.base_work_dir)
+            exec_dir = exec_dir_obj.name
 
         env = {"PATH": os.environ.get("PATH", ""), "HOME": exec_dir}
 
@@ -115,9 +135,18 @@ class SecureCommandExecutor:
                 "error": f"Command timed out after {self.timeout} seconds",
             }
         except FileNotFoundError:
-            return {"success": False, "error": f"Command not found: {self._command_name(command)}"}
+            return {
+                "success": False,
+                "error": f"Command not found: {self._command_name(command)}",
+            }
         except Exception as exc:  # pragma: no cover
             return {"success": False, "error": str(exc)}
+        finally:
+            if exec_dir_obj is not None:
+                try:
+                    exec_dir_obj.cleanup()
+                except Exception:  # pragma: no cover - best effort
+                    pass
 
         note_parts = []
         if capture_output:
@@ -136,7 +165,10 @@ class SecureCommandExecutor:
             "working_dir": exec_dir,
         }
         if note_parts:
-            result["note"] = " and ".join(note_parts) + f" truncated to {self.max_output_bytes} bytes"
+            result["note"] = (
+                " and ".join(note_parts)
+                + f" truncated to {self.max_output_bytes} bytes"
+            )
         if process.returncode != 0:
             result.setdefault("error", stderr)
         return result
