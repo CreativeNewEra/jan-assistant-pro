@@ -13,6 +13,7 @@ from src.core.app_controller import AppController
 from src.core.config import Config
 from src.core.logging_config import get_logger
 from src.gui.enhanced_widgets import ChatInput, EnhancedChatDisplay, StatusBar
+from src.gui.help_manager import HelpManager
 
 
 class JanAssistantGUI:
@@ -40,6 +41,15 @@ class JanAssistantGUI:
         self.root = tk.Tk()
         self.root.title("🤖 Jan Assistant Pro")
         self.root.geometry(self.config.window_size)
+
+        # Menu
+        menu_bar = tk.Menu(self.root)
+        help_menu = tk.Menu(menu_bar, tearoff=0)
+        help_menu.add_command(
+            label="Show Help", accelerator="F1", command=self.show_help
+        )
+        menu_bar.add_cascade(label="Help", menu=help_menu)
+        self.root.config(menu=menu_bar)
         # Keyboard shortcuts
         # Map direct keyboard shortcuts to virtual events
         shortcut_to_event = {
@@ -50,7 +60,9 @@ class JanAssistantGUI:
             "<F1>": "<<ShowHelp>>",
         }
         for shortcut, event in shortcut_to_event.items():
-            self.root.bind(shortcut, lambda e, event=event: self.root.event_generate(event))
+            self.root.bind(
+                shortcut, lambda e, event=event: self.root.event_generate(event)
+            )
 
         # Bind virtual events to action methods
         self.root.bind("<<SaveChat>>", lambda e: self.save_chat())
@@ -116,6 +128,9 @@ class JanAssistantGUI:
         )
         self.chat_input.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
 
+        # Help manager needs reference to chat input
+        self.help_manager = HelpManager(chat_input=self.chat_input)
+
         # Send button
         self.send_button = tk.Button(
             input_frame,
@@ -175,6 +190,7 @@ class JanAssistantGUI:
             ("🗑️ Clear", self.clear_chat, "#F44336"),
             ("↩️ Undo", self.undo_action, "#795548"),
             ("↪️ Redo", self.redo_action, "#009688"),
+            ("❓ Help", self.show_help, "#3F51B5"),
         ]
 
         for text, command, color in buttons:
@@ -387,14 +403,8 @@ class JanAssistantGUI:
 
     def show_help(self):
         """Display contextual help."""
-        message = (
-            "Keyboard shortcuts:\n"
-            "Ctrl+S - Save chat\n"
-            "Ctrl+M - Memory manager\n"
-            "Ctrl+Z/Y - Undo/Redo\n"
-            "F1 - Help"
-        )
-        messagebox.showinfo("Help", message)
+        widget = self.root.focus_get()
+        self.help_manager.show_help(widget)
 
     def test_api(self):
         """Test API connection"""

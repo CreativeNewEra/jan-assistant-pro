@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import json
-import os
 import dataclasses
-from dataclasses import asdict, dataclass, field
+import json
+import logging
+import os
 import typing
-from typing import Any, Dict, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Optional
 
 ENV_PREFIX = "JAN_ASSISTANT_"
 CONFIG_ENV_VAR = "JAN_ASSISTANT_CONFIG_FILE"
@@ -65,9 +66,15 @@ class AppConfig:
         return config
 
     @classmethod
-    def _get_field_paths(cls, prefix: str = "") -> List[str]:
+    def _get_field_paths(
+        cls, target: type | None = None, prefix: str = ""
+    ) -> List[str]:
+        """Return dotted paths for dataclass fields."""
+        if target is None:
+            target = cls
+
         paths: List[str] = []
-        type_hints = typing.get_type_hints(cls)
+        type_hints = typing.get_type_hints(target)
         for name, hint in type_hints.items():
             full = f"{prefix}{name}"
             if dataclasses.is_dataclass(hint):
@@ -112,11 +119,7 @@ class AppConfig:
     @staticmethod
     def _deep_update(dest: Dict[str, Any], src: Dict[str, Any]) -> None:
         for key, value in src.items():
-            if (
-                key in dest
-                and isinstance(dest[key], dict)
-                and isinstance(value, dict)
-            ):
+            if key in dest and isinstance(dest[key], dict) and isinstance(value, dict):
                 AppConfig._deep_update(dest[key], value)
             else:
                 dest[key] = value
@@ -129,7 +132,9 @@ class AppConfig:
 
         return AppConfig(
             api=APIConfig(**_filter(data.get("api", {}), APIConfig)),
-            security=SecurityConfig(**_filter(data.get("security", {}), SecurityConfig)),
+            security=SecurityConfig(
+                **_filter(data.get("security", {}), SecurityConfig)
+            ),
             ui=UIConfig(**_filter(data.get("ui", {}), UIConfig)),
         )
 
@@ -189,4 +194,3 @@ class AppConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
-
