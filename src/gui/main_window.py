@@ -40,8 +40,24 @@ class JanAssistantGUI:
         self.root = tk.Tk()
         self.root.title("🤖 Jan Assistant Pro")
         self.root.geometry(self.config.window_size)
-        self.root.bind("<Control-z>", lambda e: self.undo_action())
-        self.root.bind("<Control-y>", lambda e: self.redo_action())
+        # Keyboard shortcuts
+        # Map direct keyboard shortcuts to virtual events
+        shortcut_to_event = {
+            "<Control-s>": "<<SaveChat>>",
+            "<Control-m>": "<<ViewMemory>>",
+            "<Control-z>": "<<UndoAction>>",
+            "<Control-y>": "<<RedoAction>>",
+            "<F1>": "<<ShowHelp>>",
+        }
+        for shortcut, event in shortcut_to_event.items():
+            self.root.bind(shortcut, lambda e, event=event: self.root.event_generate(event))
+
+        # Bind virtual events to action methods
+        self.root.bind("<<SaveChat>>", lambda e: self.save_chat())
+        self.root.bind("<<ViewMemory>>", lambda e: self.view_memory())
+        self.root.bind("<<UndoAction>>", lambda e: self.undo_action())
+        self.root.bind("<<RedoAction>>", lambda e: self.redo_action())
+        self.root.bind("<<ShowHelp>>", lambda e: self.show_help())
 
         # Apply theme
         if self.config.theme == "dark":
@@ -368,6 +384,17 @@ class JanAssistantGUI:
             bg=self.bg_color,
             fg=self.fg_color,
         ).pack(anchor=tk.W)
+
+    def show_help(self):
+        """Display contextual help."""
+        message = (
+            "Keyboard shortcuts:\n"
+            "Ctrl+S - Save chat\n"
+            "Ctrl+M - Memory manager\n"
+            "Ctrl+Z/Y - Undo/Redo\n"
+            "F1 - Help"
+        )
+        messagebox.showinfo("Help", message)
 
     def test_api(self):
         """Test API connection"""

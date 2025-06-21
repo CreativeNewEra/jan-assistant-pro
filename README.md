@@ -20,6 +20,7 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 - 🔵 **Connection Indicator**: Real-time API status with latency
 - ⬆️⬇️ **History Navigation**: Cycle through previous prompts
 - ✨ **Autocomplete**: Suggestions while typing commands
+- ⌨️ **Keyboard Shortcuts**: Ctrl+S save, Ctrl+M memory, Ctrl+Z/Y undo/redo, F1 help
 - 🧩 **Plugin Loader**: Load third-party tools dynamically
 
 ### Enterprise Features ✨ **NEW**
@@ -44,7 +45,9 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 
 The main view shows a progress bar at the top-right and a colored connection indicator
 next to the send button. Use the up/down arrow keys to navigate your message history,
-and enjoy inline autocomplete suggestions while typing.
+and enjoy inline autocomplete suggestions while typing. Common shortcuts include
+`Ctrl+S` to save the chat, `Ctrl+M` for the memory manager, `Ctrl+Z`/`Ctrl+Y` to
+undo or redo, and `F1` for contextual help.
 
 ## 📋 Requirements
 

@@ -40,6 +40,26 @@ class TestChatInput(unittest.TestCase):
         self.assertEqual(input_widget.get(), "second")
         root.destroy()
 
+    def test_shortcut_events(self):
+        root = create_root_or_skip()
+        events = []
+        root.bind("<<SaveChat>>", lambda e: events.append("save"))
+        root.bind("<<ViewMemory>>", lambda e: events.append("memory"))
+        root.bind("<<UndoAction>>", lambda e: events.append("undo"))
+        root.bind("<<RedoAction>>", lambda e: events.append("redo"))
+        root.bind("<<ShowHelp>>", lambda e: events.append("help"))
+
+        input_widget = ChatInput(root)
+
+        input_widget._on_save()
+        input_widget._on_memory()
+        input_widget._on_undo()
+        input_widget._on_redo()
+        input_widget._on_help()
+
+        self.assertEqual(events, ["save", "memory", "undo", "redo", "help"])
+        root.destroy()
+
 
 class TestStatusBar(unittest.TestCase):
     def test_connection_indicator(self):

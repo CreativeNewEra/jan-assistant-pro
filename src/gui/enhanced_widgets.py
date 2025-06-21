@@ -51,9 +51,15 @@ class ChatInput(tk.Entry):
         self.history = []
         self.history_index = None
 
-        self.bind("<Return>", self._on_submit)
-        self.bind("<Up>", self._on_up)
-        self.bind("<Down>", self._on_down)
+        self.shortcut_manager = ShortcutManager(self)
+        self.shortcut_manager.register("<Return>", self._on_submit)
+        self.shortcut_manager.register("<Up>", self._on_up)
+        self.shortcut_manager.register("<Down>", self._on_down)
+        self.shortcut_manager.register("<Control-s>", self._on_save)
+        self.shortcut_manager.register("<Control-m>", self._on_memory)
+        self.shortcut_manager.register("<Control-z>", self._on_undo)
+        self.shortcut_manager.register("<Control-y>", self._on_redo)
+        self.shortcut_manager.register("<F1>", self._on_help)
 
     def _on_submit(self, event=None):
         text = self.get().strip()
@@ -97,6 +103,30 @@ class ChatInput(tk.Entry):
     def submit(self):
         """Public method to trigger the send callback."""
         self._on_submit()
+
+    # ------------------------------------------------------------------
+    # Shortcut event handlers
+    # ------------------------------------------------------------------
+
+    def _trigger(self, event_name: str):
+        """Generate a virtual event for the bound action."""
+        self.event_generate(event_name)
+        return "break"
+
+    def _on_save(self, event=None):
+        return self._trigger("<<SaveChat>>")
+
+    def _on_memory(self, event=None):
+        return self._trigger("<<ViewMemory>>")
+
+    def _on_undo(self, event=None):
+        return self._trigger("<<UndoAction>>")
+
+    def _on_redo(self, event=None):
+        return self._trigger("<<RedoAction>>")
+
+    def _on_help(self, event=None):
+        return self._trigger("<<ShowHelp>>")
 
 
 class EnhancedChatDisplay(tk.Text):
