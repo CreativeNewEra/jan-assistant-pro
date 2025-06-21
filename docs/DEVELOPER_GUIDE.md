@@ -15,8 +15,10 @@
 
 ## Overview
 
-Jan Assistant Pro is built with enterprise-grade architecture featuring:
+- Jan Assistant Pro is built with enterprise-grade architecture featuring:
 - **Dynamic Tool Registry**: Hot-loadable tool system
+- **Plugin Loader**: Load third-party tools from the plugins directory
+- **Event Manager**: Observe configuration and application events
 - **MVC Architecture**: Clean separation of concerns
 - **Structured Error Handling**: Rich error context and debugging
 - **Advanced Logging**: Production-ready logging infrastructure

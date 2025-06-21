@@ -20,6 +20,7 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 - 🔵 **Connection Indicator**: Real-time API status with latency
 - ⬆️⬇️ **History Navigation**: Cycle through previous prompts
 - ✨ **Autocomplete**: Suggestions while typing commands
+- 🧩 **Plugin Loader**: Load third-party tools dynamically
 
 ### Enterprise Features ✨ **NEW**
 - 🏗️ **Dynamic Tool Registry**: Hot-loadable tool system with automatic validation
@@ -28,6 +29,7 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 - ✅ **Configuration Validation**: Schema-based config validation with auto-documentation
 - 🧪 **Comprehensive Testing**: Full test suite with high coverage and CI/CD ready
 - 🔧 **Professional Architecture**: Clean MVC separation with extensible design
+- 📣 **Event Manager**: Subscribe to configuration change notifications
 - 🔒 **Privacy First**: Everything runs locally, your data stays yours
 - ⚙️ **Enterprise Configuration**: Validated JSON configuration with rich schemas
 - 📈 **Prometheus Metrics**: Built-in metrics endpoint for monitoring
@@ -370,8 +372,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] **Comprehensive Testing**: Full test suite with high coverage
 - [x] **MVC Architecture**: Clean separation of concerns
 
-#### 🚧 **v0.3.0 - Plugin Ecosystem (In Progress)**
-- [ ] **Plugin System**: Third-party tool plugins with hot-loading
+#### 🚀 **v0.3.0 - Plugin Ecosystem**
+- [x] **Plugin System**: Third-party tool plugins with hot-loading
 - [ ] **Tool Marketplace**: Community tool sharing and installation
 - [ ] **Web Search Tools**: Internet search and web scraping capabilities
 - [ ] **Calendar Integration**: Schedule management and reminders

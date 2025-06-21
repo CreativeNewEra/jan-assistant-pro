@@ -126,7 +126,7 @@ Jan Assistant Pro now follows enterprise-grade MVC architecture:
 ## 🚀 Future Roadmap
 
 ### v0.3.0 - Plugin Ecosystem
-- [ ] Third-party plugin system
+- [x] Third-party plugin system
 - [ ] Tool marketplace and sharing
 - [ ] Hot-loading capabilities
 - [ ] Community tool repository
