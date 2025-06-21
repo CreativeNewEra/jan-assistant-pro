@@ -117,6 +117,10 @@ python -m pytest tests/ --cov=src/
 python -m pytest tests/test_api_client.py
 ```
 
+Asynchronous tests use `pytest-asyncio`. The `pyproject.toml` config defines an
+`asyncio` marker and sets `asyncio_mode = "auto"` so the event loop policy is
+handled automatically.
+
 Some tests rely on optional packages like `psutil` (system metrics) and
 `tkinter` (GUI widgets). If these modules are not installed, pytest will skip
 the corresponding tests automatically.
