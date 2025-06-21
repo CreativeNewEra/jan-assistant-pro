@@ -11,6 +11,12 @@ from src.core.logging_config import get_logger
 from src.core.metrics import record_tool
 from src.tools.secure_command_executor import SecureCommandExecutor
 
+# ---------------------------------------------------------------------------
+# Default command groups for system command execution
+# ---------------------------------------------------------------------------
+SAFE_INFO_COMMANDS = ["ls", "pwd", "date", "whoami", "echo"]
+SAFE_READ_COMMANDS = ["cat", "head", "tail", "grep"]  # Still dangerous!
+
 
 class SystemTools:
     """Tools for executing system commands safely"""
@@ -24,31 +30,10 @@ class SystemTools:
         disk_cache_dir: str | None = "data/cache/system_tools",
         disk_cache_ttl: int = 300,
     ):
-        self.allowed_commands = allowed_commands or [
-            "ls",
-            "pwd",
-            "cat",
-            "echo",
-            "python3",
-            "python",
-            "pip",
-            "pip3",
-            "git",
-            "curl",
-            "wget",
-            "grep",
-            "find",
-            "wc",
-            "head",
-            "tail",
-            "sort",
-            "uniq",
-            "date",
-            "whoami",
-            "which",
-            "type",
-            "ping",
-        ]
+        # Default to a restricted set of basic info and read commands
+        self.allowed_commands = (
+            allowed_commands or SAFE_INFO_COMMANDS + SAFE_READ_COMMANDS
+        )
         self.blocked_commands = blocked_commands or ["rm", "shutdown", "reboot"]
         self.timeout = timeout
         self.system = platform.system().lower()
@@ -56,7 +41,11 @@ class SystemTools:
             f"{self.__class__.__module__}.{self.__class__.__name__}",
             {"timeout": self.timeout},
         )
-        self.disk_cache = DiskCache(disk_cache_dir, default_ttl=disk_cache_ttl) if disk_cache_dir else None
+        self.disk_cache = (
+            DiskCache(disk_cache_dir, default_ttl=disk_cache_ttl)
+            if disk_cache_dir
+            else None
+        )
 
     def clear_disk_cache(self) -> None:
         """Clear the system tool disk cache."""
@@ -358,3 +347,41 @@ class SystemTools:
                 "success": False,
                 "error": f"Error getting current directory: {str(e)}",
             }
+
+    @record_tool("list_directory")
+    def list_directory(self, path: str = ".") -> Dict[str, Any]:
+        """List files and directories using the filesystem API."""
+        try:
+            if not os.path.exists(path):
+                return {"success": False, "error": f"Directory '{path}' does not exist"}
+            if not os.path.isdir(path):
+                return {"success": False, "error": f"'{path}' is not a directory"}
+
+            entries = os.listdir(path)
+            files = []
+            directories = []
+            for name in sorted(entries):
+                full_path = os.path.join(path, name)
+                info = {"name": name, "path": full_path}
+                if os.path.isdir(full_path):
+                    directories.append(info)
+                else:
+                    info["size"] = (
+                        os.path.getsize(full_path)
+                        if os.path.isfile(full_path)
+                        else None
+                    )
+                    files.append(info)
+
+            return {
+                "success": True,
+                "directory": path,
+                "files": files,
+                "directories": directories,
+                "total_files": len(files),
+                "total_directories": len(directories),
+            }
+        except PermissionError:
+            return {"success": False, "error": f"Permission denied accessing '{path}'"}
+        except Exception as exc:
+            return {"success": False, "error": str(exc)}

@@ -7,11 +7,16 @@ import os
 import time
 from typing import Any, Dict
 
-from .event_manager import EventManager
-
 from cachetools import TTLCache
 
+from .event_manager import EventManager
 from .logging_config import get_logger
+
+# ---------------------------------------------------------------------------
+# Default command sets for security configuration
+# ---------------------------------------------------------------------------
+SAFE_INFO_COMMANDS = ["ls", "pwd", "date", "whoami", "echo"]
+SAFE_READ_COMMANDS = ["cat", "head", "tail", "grep"]  # Still dangerous!
 
 
 class Config:
@@ -112,15 +117,7 @@ class Config:
                 "web_search": False,
             },
             "security": {
-                "allowed_commands": [
-                    "ls",
-                    "pwd",
-                    "cat",
-                    "echo",
-                    "python3",
-                    "python",
-                    "ping",
-                ],
+                "allowed_commands": SAFE_INFO_COMMANDS + SAFE_READ_COMMANDS,
                 "restricted_paths": ["/etc", "/sys", "/proc"],
                 "max_file_size": "10MB",
             },

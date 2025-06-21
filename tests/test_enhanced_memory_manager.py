@@ -1,7 +1,9 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
 
 from src.core.memory import EnhancedMemoryManager
 
@@ -23,7 +25,7 @@ def test_access_statistics(tmp_path):
     manager.remember("hello", "world")
 
     assert manager.recall("hello") is not None
-    second = manager.recall("hello")
+    manager.recall("hello")
     # After first recall, access_count is incremented once; recall returns previous value
     updated = manager.recall("hello")
     assert updated is not None

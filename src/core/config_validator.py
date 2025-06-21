@@ -3,13 +3,19 @@ Configuration validation for Jan Assistant Pro
 Provides schema-based validation and type safety for configuration
 """
 
-from dataclasses import dataclass, field
 import json
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union
 
 from src.core.exceptions import ConfigurationError, ValidationError
+
+# ---------------------------------------------------------------------------
+# Default command sets for validation
+# ---------------------------------------------------------------------------
+SAFE_INFO_COMMANDS = ["ls", "pwd", "date", "whoami", "echo"]
+SAFE_READ_COMMANDS = ["cat", "head", "tail", "grep"]  # Still dangerous!
 
 
 @dataclass
@@ -256,7 +262,7 @@ def create_jan_assistant_schema() -> ConfigSchema:
         ValidationRule(
             field_type=list,
             required=False,
-            default=["ls", "pwd", "cat", "echo", "python3", "python", "ping"],
+            default=SAFE_INFO_COMMANDS + SAFE_READ_COMMANDS,
             description="List of allowed system commands",
         ),
     )

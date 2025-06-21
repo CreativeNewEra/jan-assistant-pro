@@ -24,7 +24,17 @@
         "web_search": false,
     },
     "security": {
-        "allowed_commands": ["ls", "pwd", "cat", "echo", "ping"],
+        "allowed_commands": [
+            "ls",
+            "pwd",
+            "date",
+            "whoami",
+            "echo",
+            "cat",
+            "head",
+            "tail",
+            "grep",
+        ],
         "blocked_commands": ["rm", "shutdown"],
         "restricted_paths": ["/etc", "/sys", "/proc"],
         "command_timeout": 30,

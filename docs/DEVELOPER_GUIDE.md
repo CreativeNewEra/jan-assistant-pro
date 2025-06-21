@@ -359,7 +359,10 @@ config = cfg.config_data
     "font_size": 10
   },
   "security": {
-    "allowed_commands": ["ls", "pwd", "python3"],
+    "allowed_commands": [
+      "ls", "pwd", "date", "whoami", "echo",
+      "cat", "head", "tail", "grep"
+    ],
     "restricted_paths": ["/etc", "/sys"],
     "blocked_commands": ["rm", "shutdown"],
     "command_timeout": 30,
