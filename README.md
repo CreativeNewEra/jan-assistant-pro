@@ -330,11 +330,16 @@ coverage html  # Creates htmlcov/ directory
 
 **Test Coverage:**
 - 🧪 **Unit Tests**: Individual component testing
-- 🔗 **Integration Tests**: Cross-component interaction testing  
+- 🔗 **Integration Tests**: Cross-component interaction testing
 - 🎭 **Mock Testing**: External dependency isolation
 - 🏗️ **Architecture Tests**: Design pattern validation
 - 🚨 **Error Testing**: Exception handling verification
 - ⚡ **Performance Tests**: Speed and memory benchmarks
+
+#### Coverage Results
+
+CI runs tests with `pytest-cov` and saves a `coverage.xml` artifact. Download this
+file from the workflow run or connect Codecov for detailed coverage reports.
 
 ### Code Style
 
