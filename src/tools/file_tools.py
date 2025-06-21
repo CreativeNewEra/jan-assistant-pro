@@ -473,12 +473,11 @@ class FileTools:
             files = []
             directories = []
 
-            items = list(path.glob(pattern))
+            all_items = list(path.glob(pattern))
+            items = [i for i in all_items if include_hidden or not i.name.startswith(".")]
             total = len(items)
 
             for idx, item in enumerate(items, start=1):
-                if not include_hidden and item.name.startswith("."):
-                    continue
 
                 item_info = {
                     "name": item.name,
