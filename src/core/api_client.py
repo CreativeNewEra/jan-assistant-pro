@@ -11,6 +11,7 @@ from .cache import TTLCache
 from .circuit_breaker import CircuitBreaker
 
 from src.core.metrics import api_calls, api_errors, api_latency
+from .exceptions import APIError
 
 import httpx
 
@@ -377,9 +378,3 @@ class APIClient:
             }
         except Exception:
             return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
-
-
-class APIError(Exception):
-    """Custom exception for API-related errors"""
-
-    pass
