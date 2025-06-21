@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 from src.core.cache import DiskCache
 from src.core.logging_config import get_logger
 from src.core.metrics import record_tool
+from src.core.user_friendly_error import UserFriendlyError
 from src.core.utils import validate_input
 from src.tools.secure_command_executor import SecureCommandExecutor
 
@@ -61,6 +62,20 @@ class SystemTools:
         if base_command in self.blocked_commands:
             return False
         return base_command in self.allowed_commands
+
+    def _make_user_error(
+        self,
+        cause: str,
+        message: str,
+        suggestions: List[str] | None = None,
+        doc: str | None = None,
+    ) -> Dict[str, Any]:
+        return UserFriendlyError(
+            cause=cause,
+            user_message=message,
+            suggestions=suggestions or [],
+            documentation_link=doc,
+        ).to_dict()
 
     def _sanitize_command(self, command: str) -> str:
         """Basic command sanitization"""
@@ -125,14 +140,31 @@ class SystemTools:
             return {
                 "success": False,
                 "error": f"Working directory '{working_dir}' does not exist",
+                "user_error": self._make_user_error(
+                    "FileNotFoundError",
+                    f"Directory '{working_dir}' does not exist",
+                    [
+                        "Check the path",
+                        "Create the directory before running the command",
+                    ],
+                    "https://example.com/docs/errors#system",
+                ),
             }
 
-        return executor.execute(
+        result = executor.execute(
             command,
             work_dir=working_dir,
             capture_output=capture_output,
             shell=shell,
         )
+        if not result.get("success", False):
+            result["user_error"] = self._make_user_error(
+                "CommandError",
+                result.get("error", "Command failed"),
+                ["Verify the command syntax", "Ensure it is allowed"],
+                "https://example.com/docs/errors#system",
+            )
+        return result
 
     @record_tool("get_system_info")
     def get_system_info(

@@ -8,6 +8,8 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
 
+from src.core.user_friendly_error import UserFriendlyError
+
 from src.core.cache import MEMORY_TTL_CACHE, DiskCache
 from src.core.logging_config import get_logger
 from src.core.metrics import record_tool
@@ -68,6 +70,20 @@ class FileTools:
         except OSError:
             return True  # If we can't get size, allow the operation
 
+    def _make_user_error(
+        self,
+        cause: str,
+        message: str,
+        suggestions: List[str] | None = None,
+        doc: str | None = None,
+    ) -> Dict[str, Any]:
+        return UserFriendlyError(
+            cause=cause,
+            user_message=message,
+            suggestions=suggestions or [],
+            documentation_link=doc,
+        ).to_dict()
+
     @record_tool("read_file")
     def read_file(self, file_path: str, encoding: str = "utf-8") -> Dict[str, Any]:
         """
@@ -91,6 +107,15 @@ class FileTools:
                 return {
                     "success": False,
                     "error": f"Access to path '{file_path}' is restricted",
+                    "user_error": self._make_user_error(
+                        "SecurityError",
+                        f"Access to '{file_path}' is not allowed",
+                        [
+                            "Choose a file in your workspace",
+                            "Contact an administrator to adjust security settings",
+                        ],
+                        "https://example.com/docs/errors#security",
+                    ),
                 }
 
             if not os.path.exists(file_path):
@@ -127,6 +152,15 @@ class FileTools:
             return {
                 "success": False,
                 "error": f"Permission denied accessing '{file_path}'",
+                "user_error": self._make_user_error(
+                    "PermissionError",
+                    f"Cannot read '{file_path}'",
+                    [
+                        "Check file permissions",
+                        "Ensure the file exists and is readable",
+                    ],
+                    "https://example.com/docs/errors#permissions",
+                ),
             }
         except Exception as e:
             return {
@@ -160,6 +194,15 @@ class FileTools:
                 return {
                     "success": False,
                     "error": f"Access to path '{file_path}' is restricted",
+                    "user_error": self._make_user_error(
+                        "SecurityError",
+                        f"Access to '{file_path}' is not allowed",
+                        [
+                            "Choose a location within your workspace",
+                            "Contact an administrator to adjust security settings",
+                        ],
+                        "https://example.com/docs/errors#security",
+                    ),
                 }
 
             file_existed = os.path.exists(file_path)
@@ -203,6 +246,15 @@ class FileTools:
             return {
                 "success": False,
                 "error": f"Permission denied writing to '{file_path}'",
+                "user_error": self._make_user_error(
+                    "PermissionError",
+                    f"Cannot write to '{file_path}'",
+                    [
+                        "Check file or directory permissions",
+                        "Ensure the directory is writable or choose another path",
+                    ],
+                    "https://example.com/docs/errors#permissions",
+                ),
             }
         except Exception as e:
             return {
@@ -231,6 +283,15 @@ class FileTools:
                 return {
                     "success": False,
                     "error": f"Access to path '{file_path}' is restricted",
+                    "user_error": self._make_user_error(
+                        "SecurityError",
+                        f"Access to '{file_path}' is not allowed",
+                        [
+                            "Choose a location within your workspace",
+                            "Contact an administrator to adjust security settings",
+                        ],
+                        "https://example.com/docs/errors#security",
+                    ),
                 }
 
             # Create directory if it doesn't exist
@@ -267,6 +328,15 @@ class FileTools:
             return {
                 "success": False,
                 "error": f"Permission denied writing to '{file_path}'",
+                "user_error": self._make_user_error(
+                    "PermissionError",
+                    f"Cannot write to '{file_path}'",
+                    [
+                        "Check file or directory permissions",
+                        "Ensure the directory is writable or choose another path",
+                    ],
+                    "https://example.com/docs/errors#permissions",
+                ),
             }
         except Exception as e:
             return {
@@ -291,6 +361,15 @@ class FileTools:
                 return {
                     "success": False,
                     "error": f"Access to path '{file_path}' is restricted",
+                    "user_error": self._make_user_error(
+                        "SecurityError",
+                        f"Access to '{file_path}' is not allowed",
+                        [
+                            "Choose a file in your workspace",
+                            "Contact an administrator to adjust security settings",
+                        ],
+                        "https://example.com/docs/errors#security",
+                    ),
                 }
 
             if not os.path.exists(file_path):
@@ -312,6 +391,15 @@ class FileTools:
             return {
                 "success": False,
                 "error": f"Permission denied deleting '{file_path}'",
+                "user_error": self._make_user_error(
+                    "PermissionError",
+                    f"Cannot delete '{file_path}'",
+                    [
+                        "Check file permissions",
+                        "Ensure you own the file or have sufficient rights",
+                    ],
+                    "https://example.com/docs/errors#permissions",
+                ),
             }
         except Exception as e:
             return {
@@ -356,6 +444,15 @@ class FileTools:
                 return {
                     "success": False,
                     "error": f"Access to path '{directory}' is restricted",
+                    "user_error": self._make_user_error(
+                        "SecurityError",
+                        f"Access to '{directory}' is not allowed",
+                        [
+                            "Choose a directory within your workspace",
+                            "Contact an administrator to adjust security settings",
+                        ],
+                        "https://example.com/docs/errors#security",
+                    ),
                 }
 
             if not os.path.exists(directory):
@@ -406,6 +503,15 @@ class FileTools:
             return {
                 "success": False,
                 "error": f"Permission denied accessing '{directory}'",
+                "user_error": self._make_user_error(
+                    "PermissionError",
+                    f"Cannot access '{directory}'",
+                    [
+                        "Check directory permissions",
+                        "Ensure you have read access",
+                    ],
+                    "https://example.com/docs/errors#permissions",
+                ),
             }
         except Exception as e:
             return {
@@ -436,6 +542,15 @@ class FileTools:
                 return {
                     "success": False,
                     "error": "Access to one or both paths is restricted",
+                    "user_error": self._make_user_error(
+                        "SecurityError",
+                        "Copy operation not allowed for one or both paths",
+                        [
+                            "Use paths within your workspace",
+                            "Contact an administrator if this should be permitted",
+                        ],
+                        "https://example.com/docs/errors#security",
+                    ),
                 }
 
             if not os.path.exists(source):
@@ -472,6 +587,15 @@ class FileTools:
             return {
                 "success": False,
                 "error": f"Permission denied copying from '{source}' to '{destination}'",
+                "user_error": self._make_user_error(
+                    "PermissionError",
+                    f"Cannot copy from '{source}'",
+                    [
+                        "Check permissions on the source and destination",
+                        "Ensure the destination is writable",
+                    ],
+                    "https://example.com/docs/errors#permissions",
+                ),
             }
         except Exception as e:
             return {"success": False, "error": f"Error copying file: {str(e)}"}
@@ -512,6 +636,15 @@ class FileTools:
             return {
                 "success": False,
                 "error": f"Permission denied accessing '{file_path}'",
+                "user_error": self._make_user_error(
+                    "PermissionError",
+                    f"Cannot access '{file_path}'",
+                    [
+                        "Check file permissions",
+                        "Ensure the file is readable",
+                    ],
+                    "https://example.com/docs/errors#permissions",
+                ),
             }
         except Exception as e:
             return {

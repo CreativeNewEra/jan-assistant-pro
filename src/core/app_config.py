@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import dataclasses
 from dataclasses import asdict, dataclass, field
+import typing
 from typing import Any, Dict, Optional
 
 ENV_PREFIX = "JAN_ASSISTANT_"
@@ -62,6 +64,18 @@ class AppConfig:
 
         return config
 
+    @classmethod
+    def _get_field_paths(cls, prefix: str = "") -> List[str]:
+        paths: List[str] = []
+        type_hints = typing.get_type_hints(cls)
+        for name, hint in type_hints.items():
+            full = f"{prefix}{name}"
+            if dataclasses.is_dataclass(hint):
+                paths.extend(cls._get_field_paths(hint, full + "."))
+            else:
+                paths.append(full)
+        return paths
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
@@ -109,10 +123,14 @@ class AppConfig:
 
     @staticmethod
     def _from_dict(data: Dict[str, Any]) -> "AppConfig":
+        def _filter(d: Dict[str, Any], cls: type) -> Dict[str, Any]:
+            allowed = typing.get_type_hints(cls).keys()
+            return {k: v for k, v in d.items() if k in allowed}
+
         return AppConfig(
-            api=APIConfig(**data.get("api", {})),
-            security=SecurityConfig(**data.get("security", {})),
-            ui=UIConfig(**data.get("ui", {})),
+            api=APIConfig(**_filter(data.get("api", {}), APIConfig)),
+            security=SecurityConfig(**_filter(data.get("security", {}), SecurityConfig)),
+            ui=UIConfig(**_filter(data.get("ui", {}), UIConfig)),
         )
 
     @staticmethod
