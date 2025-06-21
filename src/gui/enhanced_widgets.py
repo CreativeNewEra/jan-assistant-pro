@@ -54,6 +54,11 @@ class ChatInput(tk.Entry):
         self.bind("<Return>", self._on_submit)
         self.bind("<Up>", self._on_up)
         self.bind("<Down>", self._on_down)
+        self.bind("<Control-s>", self._on_save)
+        self.bind("<Control-m>", self._on_memory)
+        self.bind("<Control-z>", self._on_undo)
+        self.bind("<Control-y>", self._on_redo)
+        self.bind("<F1>", self._on_help)
 
     def _on_submit(self, event=None):
         text = self.get().strip()
@@ -97,6 +102,30 @@ class ChatInput(tk.Entry):
     def submit(self):
         """Public method to trigger the send callback."""
         self._on_submit()
+
+    # ------------------------------------------------------------------
+    # Shortcut event handlers
+    # ------------------------------------------------------------------
+
+    def _trigger(self, event_name: str):
+        """Generate a virtual event for the bound action."""
+        self.event_generate(event_name)
+        return "break"
+
+    def _on_save(self, event=None):
+        return self._trigger("<<SaveChat>>")
+
+    def _on_memory(self, event=None):
+        return self._trigger("<<ViewMemory>>")
+
+    def _on_undo(self, event=None):
+        return self._trigger("<<UndoAction>>")
+
+    def _on_redo(self, event=None):
+        return self._trigger("<<RedoAction>>")
+
+    def _on_help(self, event=None):
+        return self._trigger("<<ShowHelp>>")
 
 
 class EnhancedChatDisplay(tk.Text):

@@ -26,6 +26,7 @@
 - **Comprehensive Testing**: Full test coverage
 - **Progress Bar** and **Connection Indicator** for clear status
 - **History Navigation** with **Autocomplete** in the GUI
+- **Keyboard Shortcuts**: Ctrl+S save, Ctrl+M memory, Ctrl+Z/Y undo/redo, F1 help
 
 ## Architecture
 
