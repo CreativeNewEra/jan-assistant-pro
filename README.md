@@ -75,9 +75,12 @@ and enjoy inline autocomplete suggestions while typing.
 
 3. **Configure your API settings**:
    ```bash
-   cp config/config.example.json config/config.json
-   # Edit config.json with your API details
-   ```
+ cp config/config.example.json config/config.json
+ # Edit config.json with your API details
+ ```
+  You can also set the API key via the `JAN_API_KEY` environment variable. When
+  using `SecureConfig`, the key is saved to your system keyring after the first
+  prompt.
 
 4. **Run the application**:
    ```bash
