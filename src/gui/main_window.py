@@ -3,16 +3,16 @@ Main GUI window for Jan Assistant Pro
 Refactored from the original working implementation
 """
 
-import queue
 import threading
 import tkinter as tk
+from concurrent.futures import Future, ThreadPoolExecutor
 from tkinter import filedialog, messagebox
 from typing import Any, Dict
 
 from src.core.app_controller import AppController
 from src.core.config import Config
-from src.gui.enhanced_widgets import ChatInput, EnhancedChatDisplay, StatusBar
 from src.core.logging_config import get_logger
+from src.gui.enhanced_widgets import ChatInput, EnhancedChatDisplay, StatusBar
 
 
 class JanAssistantGUI:
@@ -29,13 +29,11 @@ class JanAssistantGUI:
         # Setup GUI
         self.setup_gui()
 
-        # Queues and worker thread for async processing
-        self.message_queue = queue.Queue()
-        self.result_queue = queue.Queue()
-        self.worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
-        self.worker_thread.start()
-        # Periodically check for results
-        self.root.after(100, self._check_results)
+        # Thread pool executor for async processing
+        self.executor = ThreadPoolExecutor(max_workers=2)
+
+        # Handle window close event
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def setup_gui(self):
         """Create the GUI interface"""
@@ -208,38 +206,33 @@ class JanAssistantGUI:
         """Update status bar"""
         self.status_bar.set_status(status, color, progress)
 
-    def _worker_loop(self):
-        """Dedicated worker thread for processing messages"""
-        while True:
-            try:
-                message = self.message_queue.get(timeout=1)
-                result = self.process_message(message)
-                self.result_queue.put(result)
-            except queue.Empty:
-                continue
-            except Exception as e:
-                self.logger.error(
-                    "An error occurred in the worker loop",
-                    exc_info=True,
-                    extra={"extra_fields": {"error": str(e)}},
-                )
-                self.result_queue.put({"type": "error", "content": str(e)})
-
-    def _check_results(self):
-        """Check for processed results and update the GUI"""
+    def _handle_future_result(self, future: Future) -> None:
+        """Handle results from worker threads."""
         try:
-            result = self.result_queue.get_nowait()
-        except queue.Empty:
-            pass
-        else:
+            result = future.result()
+        except Exception as exc:  # pragma: no cover - safety net
+            self.logger.error(
+                "Worker thread failed",
+                exc_info=True,
+                extra={"extra_fields": {"error": str(exc)}},
+            )
+            error_msg = str(exc)
+            self.root.after(0, lambda: self.add_to_chat("⚠️ Error", error_msg))
+            self.root.after(
+                0, lambda: self.update_status("Ready", "#ff0000", progress=False)
+            )
+            self.root.after(0, lambda: self.send_button.config(state=tk.NORMAL))
+            return
+
+        def gui_update() -> None:
             if result.get("type") == "error":
                 self.add_to_chat("⚠️ Error", result.get("content", ""))
             else:
                 self.add_to_chat("🤖 Assistant", result.get("content", ""))
             self.update_status("Ready", "#00ff00", progress=False)
             self.send_button.config(state=tk.NORMAL)
-        finally:
-            self.root.after(100, self._check_results)
+
+        self.root.after(0, gui_update)
 
     def send_message(self, message: str):
         """Send message to assistant"""
@@ -252,8 +245,8 @@ class JanAssistantGUI:
         self.send_button.config(state=tk.DISABLED)
         self.update_status("🤔 Thinking...", "#ffff00", progress=True)
 
-        # Queue message for worker thread
-        self.message_queue.put(message)
+        future = self.executor.submit(self.process_message, message)
+        future.add_done_callback(self._handle_future_result)
 
     def process_message(self, message: str) -> Dict[str, Any]:
         """Process message with the controller"""
@@ -422,5 +415,13 @@ class JanAssistantGUI:
         except KeyboardInterrupt:
             self.logger.info("Application interrupted")
         finally:
-            # Save memory on exit
+            self.on_close()
+
+    def on_close(self) -> None:
+        """Handle application shutdown."""
+        try:
             self.controller.memory_manager.save_memory()
+        finally:
+            self.executor.shutdown(wait=False, cancel_futures=True)
+            if self.root.winfo_exists():
+                self.root.destroy()
