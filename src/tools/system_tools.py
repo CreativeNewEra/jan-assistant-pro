@@ -4,13 +4,12 @@ System command tools for Jan Assistant Pro
 
 import os
 import platform
-import shlex
 from typing import Any, Dict, List
 
-from src.tools.secure_command_executor import SecureCommandExecutor
-
+from src.core.cache import MEMORY_TTL_CACHE
 from src.core.logging_config import get_logger
 from src.core.metrics import record_tool
+from src.tools.secure_command_executor import SecureCommandExecutor
 
 
 class SystemTools:
@@ -137,6 +136,11 @@ class SystemTools:
         Returns:
             Dictionary with system information
         """
+        cache_key = "system_info"
+        cached = MEMORY_TTL_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
+
         try:
             import psutil
 
@@ -150,7 +154,7 @@ class SystemTools:
             # Get disk info
             disk = psutil.disk_usage("/")
 
-            return {
+            result = {
                 "success": True,
                 "platform": platform.platform(),
                 "system": platform.system(),
@@ -168,6 +172,8 @@ class SystemTools:
                     "usage_percent": round((disk.used / disk.total) * 100, 1),
                 },
             }
+            MEMORY_TTL_CACHE[cache_key] = result
+            return result
 
         except ImportError:
             # Fallback without psutil
