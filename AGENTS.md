@@ -153,6 +153,8 @@ After using a tool, I'll provide the result and you can respond naturally to the
 - Unit tests for each tool
 - Integration tests for tool chains
 - Security tests using malicious inputs
+- Static analysis with Bandit
+- Dependency vulnerability scans using Safety
 - Performance tests for large operations
 - Mock external dependencies in tests
 
@@ -186,6 +188,7 @@ After using a tool, I'll provide the result and you can respond naturally to the
 - Firewall rules should only allow Jan.ai communication
 - Keep dependencies updated
 - Review allowed commands and paths regularly
+- CI runs Bandit and Safety on pull requests
 
 ## Future Roadmap
 
