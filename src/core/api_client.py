@@ -8,6 +8,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from .cache import TTLCache
+from .circuit_breaker import CircuitBreaker
 
 from src.core.metrics import api_calls, api_errors, api_latency
 
@@ -27,14 +28,18 @@ class AsyncAPIClient:
         cache_enabled: bool = False,
         cache_ttl: int = 300,
         cache_size: int = 128,
+        circuit_breaker: CircuitBreaker | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
         self.cache_enabled = cache_enabled
-        self._cache = TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_enabled else None
+        self._cache = (
+            TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_enabled else None
+        )
         self.session: Optional[httpx.AsyncClient] = None
+        self.breaker = circuit_breaker or CircuitBreaker()
 
     def _create_session(self) -> httpx.AsyncClient:
         client = httpx.AsyncClient(timeout=self.timeout)
@@ -73,6 +78,8 @@ class AsyncAPIClient:
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
     ) -> Dict[str, Any]:
+        if self.breaker and not self.breaker.allow():
+            raise APIError("Circuit breaker open")
         url = f"{self.base_url}/chat/completions"
 
         payload = {
@@ -89,6 +96,8 @@ class AsyncAPIClient:
         if self.cache_enabled and self._cache is not None:
             cached = self._cache.get(cache_key)
             if cached is not None:
+                if self.breaker:
+                    self.breaker.after_call(True)
                 return cached
 
         session = await self._ensure_session()
@@ -100,11 +109,17 @@ class AsyncAPIClient:
             result = response.json()
             if self.cache_enabled and self._cache is not None:
                 self._cache[cache_key] = result
+            if self.breaker:
+                self.breaker.after_call(True)
         except httpx.TimeoutException:
             api_errors.inc()
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError("Request timed out")
         except httpx.RequestError:
             api_errors.inc()
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError("Could not connect to API server. Is Jan running?")
         except httpx.HTTPStatusError as e:
             response = e.response
@@ -112,26 +127,40 @@ class AsyncAPIClient:
                 error_detail = response.json().get("message", "Unknown error")
                 if "Engine is not loaded" in error_detail:
                     api_errors.inc()
+                    if self.breaker:
+                        self.breaker.after_call(False)
                     raise APIError(
                         "Model is not loaded in Jan. Please start your model first."
                     )
                 else:
                     api_errors.inc()
+                    if self.breaker:
+                        self.breaker.after_call(False)
                     raise APIError(f"Bad request: {error_detail}")
             elif response.status_code == 401:
                 api_errors.inc()
+                if self.breaker:
+                    self.breaker.after_call(False)
                 raise APIError("Authentication failed. Check your API key.")
             elif response.status_code == 404:
                 api_errors.inc()
+                if self.breaker:
+                    self.breaker.after_call(False)
                 raise APIError("API endpoint not found. Check your base URL.")
             else:
                 api_errors.inc()
+                if self.breaker:
+                    self.breaker.after_call(False)
                 raise APIError(f"HTTP {response.status_code}: {response.text}")
         except json.JSONDecodeError:
             api_errors.inc()
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError("Invalid JSON response from server")
         except Exception as e:  # pragma: no cover - unexpected branch
             api_errors.inc()
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError(f"Unexpected error: {str(e)}")
         finally:
             api_latency.observe(time.perf_counter() - start_time)
@@ -139,12 +168,16 @@ class AsyncAPIClient:
         return result
 
     async def get_models(self) -> List[Dict[str, Any]]:
+        if self.breaker and not self.breaker.allow():
+            raise APIError("Circuit breaker open")
         url = f"{self.base_url}/models"
 
         cache_key = "get_models"
         if self.cache_enabled and self._cache is not None:
             cached = self._cache.get(cache_key)
             if cached is not None:
+                if self.breaker:
+                    self.breaker.after_call(True)
                 return cached
 
         session = await self._ensure_session()
@@ -154,8 +187,12 @@ class AsyncAPIClient:
             data = response.json().get("data", [])
             if self.cache_enabled and self._cache is not None:
                 self._cache[cache_key] = data
+            if self.breaker:
+                self.breaker.after_call(True)
             return data
         except Exception as e:
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError(f"Failed to get models: {str(e)}")
 
     async def health_check(self) -> bool:
@@ -216,6 +253,7 @@ class APIClient:
         cache_enabled: bool = False,
         cache_ttl: int = 300,
         cache_size: int = 128,
+        circuit_breaker: CircuitBreaker | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
@@ -230,7 +268,9 @@ class APIClient:
             cache_enabled=cache_enabled,
             cache_ttl=cache_ttl,
             cache_size=cache_size,
+            circuit_breaker=circuit_breaker,
         )
+        self.breaker = self._async_client.breaker
 
     def __enter__(self) -> "APIClient":
         self._run(self._async_client.__aenter__())
@@ -262,6 +302,8 @@ class APIClient:
         max_tokens: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Synchronously send a chat completion request."""
+        if self.breaker and not self.breaker.allow():
+            raise APIError("Circuit breaker open")
 
         return self._run(
             self._async_client.chat_completion(
@@ -274,6 +316,8 @@ class APIClient:
 
     def get_models(self) -> List[Dict[str, Any]]:
         """Synchronously fetch available models."""
+        if self.breaker and not self.breaker.allow():
+            raise APIError("Circuit breaker open")
         return self._run(self._async_client.get_models())
 
     def health_check(self) -> bool:

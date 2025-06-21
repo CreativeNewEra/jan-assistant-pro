@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, Mock, patch
+import time
 
 import asyncio
 import pytest
@@ -6,6 +7,7 @@ import aiohttp
 
 from src.core.async_api_client import AsyncAPIClient
 from src.core.exceptions import APIError
+from src.core.circuit_breaker import CircuitBreaker
 
 
 def _create_client():
@@ -96,7 +98,9 @@ async def test_chat_completion_cached():
     async with client:
         mock_resp = AsyncMock()
         mock_resp.status = 200
-        mock_resp.json = AsyncMock(return_value={"choices": [{"message": {"content": "hello"}}]})
+        mock_resp.json = AsyncMock(
+            return_value={"choices": [{"message": {"content": "hello"}}]}
+        )
         mock_resp.raise_for_status = Mock()
         mock_cm = AsyncMock()
         mock_cm.__aenter__.return_value = mock_resp
@@ -132,3 +136,45 @@ async def test_clear_api_cache():
         assert len(client._cache) == 1
         client.clear_api_cache()
         assert len(client._cache) == 0
+
+
+@pytest.mark.asyncio
+async def test_circuit_breaker_blocks_calls():
+    breaker = CircuitBreaker(fail_max=2, reset_timeout=1)
+    client = AsyncAPIClient(
+        base_url="http://test",
+        api_key="key",
+        model="model",
+        circuit_breaker=breaker,
+    )
+    messages = [{"role": "user", "content": "hi"}]
+    async with client:
+        with patch.object(
+            client.session, "post", side_effect=aiohttp.ClientError
+        ) as post:
+            with pytest.raises(APIError):
+                await client.chat_completion(messages)
+            with pytest.raises(APIError):
+                await client.chat_completion(messages)
+            assert post.call_count == 2
+        assert breaker.state == CircuitBreaker.OPEN
+
+        with patch.object(client.session, "post") as post:
+            with pytest.raises(APIError):
+                await client.chat_completion(messages)
+            post.assert_not_called()
+
+        time.sleep(1.1)
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_resp.json = AsyncMock(
+            return_value={"choices": [{"message": {"content": "ok"}}]}
+        )
+        mock_resp.raise_for_status = Mock()
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_resp
+        mock_cm.__aexit__.return_value = None
+        with patch.object(client.session, "post", return_value=mock_cm) as post:
+            await client.chat_completion(messages)
+            post.assert_called_once()
+        assert breaker.state == CircuitBreaker.CLOSED

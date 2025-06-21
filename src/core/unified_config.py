@@ -87,6 +87,7 @@ class UnifiedConfig:
                 "cache_enabled": False,
                 "cache_ttl": 300,
                 "cache_size": 128,
+                "circuit_breaker": {"fail_max": 3, "reset_timeout": 60},
             },
             "memory": {
                 "file": "data/memory.json",
@@ -259,6 +260,14 @@ class UnifiedConfig:
     @property
     def config_cache_size(self) -> int:
         return int(self.get("cache.config.size", 4))
+
+    @property
+    def breaker_fail_max(self) -> int:
+        return int(self.get("api.circuit_breaker.fail_max", 3))
+
+    @property
+    def breaker_reset_timeout(self) -> int:
+        return int(self.get("api.circuit_breaker.reset_timeout", 60))
 
     @property
     def last_loaded(self) -> float:

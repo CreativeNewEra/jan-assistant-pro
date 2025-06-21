@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 
 from src.core.config import Config
 from src.core.api_client import APIClient, APIError
+from src.core.circuit_breaker import CircuitBreaker
 from src.core.memory import MemoryManager
 from src.tools.file_tools import FileTools
 from src.tools.system_tools import SystemTools
@@ -24,32 +25,36 @@ class AppController:
             base_url=config.api_base_url,
             api_key=config.api_key,
             model=config.model_name,
-            timeout=int(config.get('api.timeout', 30)),
-            cache_enabled=bool(config.get('api.cache_enabled', False)),
-            cache_ttl=int(config.get('api.cache_ttl', 300)),
-            cache_size=int(config.get('api.cache_size', 128)),
+            timeout=int(config.get("api.timeout", 30)),
+            cache_enabled=bool(config.get("api.cache_enabled", False)),
+            cache_ttl=int(config.get("api.cache_ttl", 300)),
+            cache_size=int(config.get("api.cache_size", 128)),
+            circuit_breaker=CircuitBreaker(
+                fail_max=config.breaker_fail_max,
+                reset_timeout=config.breaker_reset_timeout,
+            ),
         )
 
         self.memory_manager = MemoryManager(
             memory_file=config.memory_file,
-            max_entries=int(config.get('memory.max_entries', 1000)),
-            auto_save=bool(config.get('memory.auto_save', True))
+            max_entries=int(config.get("memory.max_entries", 1000)),
+            auto_save=bool(config.get("memory.auto_save", True)),
         )
 
         # Initialize tools
         self.file_tools = FileTools(
-            max_file_size=str(config.get('security.max_file_size', '10MB')),
-            restricted_paths=list(config.get('security.restricted_paths', []))
+            max_file_size=str(config.get("security.max_file_size", "10MB")),
+            restricted_paths=list(config.get("security.restricted_paths", [])),
         )
 
         self.system_tools = SystemTools(
-            allowed_commands=list(config.get('security.allowed_commands', [])),
-            timeout=int(config.get('api.timeout', 30))
+            allowed_commands=list(config.get("security.allowed_commands", [])),
+            timeout=int(config.get("api.timeout", 30)),
         )
 
     def process_message(self, message: str) -> Dict[str, Any]:
         """
-        Processes a user message, interacts with the API and tools, 
+        Processes a user message, interacts with the API and tools,
         and returns the response.
         """
         try:
@@ -61,39 +66,41 @@ class AppController:
     def _chat_with_tools(self, message: str) -> str:
         """Chat with tools available"""
         system_message = self._get_system_prompt()
-        
-        messages = [
-            {"role": "system", "content": system_message}
-        ]
+
+        messages = [{"role": "system", "content": system_message}]
 
         messages.extend(self.conversation_history[-6:])
         messages.append({"role": "user", "content": message})
-        
+
         try:
             response_data = self.api_client.chat_completion(messages)
             response = self.api_client.extract_content(response_data)
         except APIError as e:
             return f"API Error: {str(e)}"
-        
+
         if "TOOL_" in response:
             tool_result = self._handle_tool_call(response)
 
             messages.append({"role": "assistant", "content": response})
-            messages.append({
-                "role": "user",
-                "content": (
-                    f"Tool result: {tool_result}. "
-                    "Please respond to the user based on this result."
-                )
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        f"Tool result: {tool_result}. "
+                        "Please respond to the user based on this result."
+                    ),
+                }
+            )
 
             try:
                 final_response_data = self.api_client.chat_completion(messages)
                 final_response = self.api_client.extract_content(final_response_data)
-                
+
                 self.conversation_history.append({"role": "user", "content": message})
-                self.conversation_history.append({"role": "assistant", "content": final_response})
-                
+                self.conversation_history.append(
+                    {"role": "assistant", "content": final_response}
+                )
+
                 return final_response
             except APIError as e:
                 return f"API Error in final response: {str(e)}"
@@ -105,13 +112,13 @@ class AppController:
     def _handle_tool_call(self, response: str) -> str:
         """Handle tool calls"""
         response = response.strip()
-        
+
         # File tools
         if "TOOL_READ_FILE:" in response:
             filename = response.split("TOOL_READ_FILE:")[1].strip()
             result = self.file_tools.read_file(filename)
             return self._format_tool_result(result)
-        
+
         elif "TOOL_WRITE_FILE:" in response:
             parts = response.split("TOOL_WRITE_FILE:")[1].strip().split("|", 1)
             filename = parts[0].strip()
@@ -123,7 +130,7 @@ class AppController:
             directory = response.split("TOOL_LIST_FILES:")[1].strip() or "."
             result = self.file_tools.list_files(directory)
             return self._format_tool_result(result)
-        
+
         elif "TOOL_COPY_FILE:" in response:
             parts = response.split("TOOL_COPY_FILE:")[1].strip().split("|", 1)
             if len(parts) >= 2:
@@ -132,22 +139,26 @@ class AppController:
                 return self._format_tool_result(result)
             else:
                 return "Error: Copy file requires source and destination"
-        
+
         elif "TOOL_DELETE_FILE:" in response:
             filename = response.split("TOOL_DELETE_FILE:")[1].strip()
             result = self.file_tools.delete_file(filename)
             return self._format_tool_result(result)
-        
+
         # Memory tools
         elif "TOOL_REMEMBER:" in response:
             parts = response.split("TOOL_REMEMBER:")[1].strip().split("|")
             key = parts[0].strip()
             value = parts[1].strip() if len(parts) > 1 else ""
             category = parts[2].strip() if len(parts) > 2 else "general"
-            
+
             success = self.memory_manager.remember(key, value, category)
-            return f"Successfully remembered: {key} = {value}" if success else "Failed to store memory"
-        
+            return (
+                f"Successfully remembered: {key} = {value}"
+                if success
+                else "Failed to store memory"
+            )
+
         elif "TOOL_RECALL:" in response:
             key = response.split("TOOL_RECALL:")[1].strip()
             memory = self.memory_manager.recall(key)
@@ -157,36 +168,32 @@ class AppController:
                 # Try fuzzy search
                 matches = self.memory_manager.fuzzy_recall(key)
                 if matches:
-                    similar = [
-                        f"{k}: {v['value']}" for k, v in matches[:3]
-                    ]
-                    return (
-                        "Found similar memories: " +
-                        ", ".join(similar)
-                    )
+                    similar = [f"{k}: {v['value']}" for k, v in matches[:3]]
+                    return "Found similar memories: " + ", ".join(similar)
                 else:
                     return f"No memory found for: {key}"
-        
+
         elif "TOOL_SEARCH_MEMORY:" in response:
             search_term = response.split("TOOL_SEARCH_MEMORY:")[1].strip()
             matches = self.memory_manager.fuzzy_recall(search_term)
             if matches:
                 results = [f"• {k}: {v['value']}" for k, v in matches[:5]]
-                return (f"Memory search results for '{search_term}':\n" +
-                        "\n".join(results))
+                return f"Memory search results for '{search_term}':\n" + "\n".join(
+                    results
+                )
             else:
                 return f"No memories found matching: {search_term}"
-        
+
         # System tools
         elif "TOOL_COMMAND:" in response:
             command = response.split("TOOL_COMMAND:")[1].strip()
             result = self.system_tools.run_command(command)
             return self._format_tool_result(result)
-        
+
         elif "TOOL_SYSTEM_INFO" in response:
             result = self.system_tools.get_system_info()
             return self._format_tool_result(result)
-        
+
         elif "TOOL_PROCESSES:" in response:
             filter_name = response.split("TOOL_PROCESSES:")[1].strip() or None
             result = self.system_tools.list_processes(filter_name)
@@ -196,14 +203,14 @@ class AppController:
 
     def _format_tool_result(self, result: Dict[str, Any]) -> str:
         """Format tool result for display"""
-        if not result.get('success', False):
+        if not result.get("success", False):
             return f"❌ Error: {result.get('error', 'Unknown error')}"
 
-        if 'content' in result:
+        if "content" in result:
             return f"📄 File content:\n{result['content']}"
-        elif 'files' in result and 'directories' in result:
-            files = result['files']
-            dirs = result['directories']
+        elif "files" in result and "directories" in result:
+            files = result["files"]
+            dirs = result["directories"]
             output = f"📁 Directory: {result['directory']}\n"
             if dirs:
                 output += f"Directories ({len(dirs)}):\n"
@@ -212,14 +219,14 @@ class AppController:
             if files:
                 output += f"Files ({len(files)}):\n"
                 for f in files[:10]:
-                    size = f"({f['size']} bytes)" if f.get('size') else ""
+                    size = f"({f['size']} bytes)" if f.get("size") else ""
                     output += f"  📄 {f['name']} {size}\n"
             return output
-        elif 'stdout' in result:
+        elif "stdout" in result:
             output = "✅ Command executed successfully"
-            if result.get('stdout'):
+            if result.get("stdout"):
                 output += f"\nOutput:\n{result['stdout']}"
-            if result.get('stderr'):
+            if result.get("stderr"):
                 output += f"\nErrors:\n{result['stderr']}"
             return output
         else:
