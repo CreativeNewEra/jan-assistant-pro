@@ -53,9 +53,11 @@ class AsyncAPIClient:
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
-        if self.session and not self.session.closed:
-            await self.session.close()
-        self.session = None
+        try:
+            if self.session and not self.session.closed:
+                await self.session.close()
+        finally:
+            self.session = None  # Always cleanup reference
 
     async def _ensure_session(self) -> aiohttp.ClientSession:
         if self.session is None or self.session.closed:
