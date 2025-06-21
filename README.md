@@ -31,6 +31,7 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 - 🔒 **Privacy First**: Everything runs locally, your data stays yours
 - ⚙️ **Enterprise Configuration**: Validated JSON configuration with rich schemas
 - 📈 **Prometheus Metrics**: Built-in metrics endpoint for monitoring
+- ♻️ **Degraded Mode**: Cached tool output shown when the API is unreachable
 
 ## 📸 Screenshots
 
@@ -148,6 +149,13 @@ Set a value to `0` to disable a cache. TTL values are in seconds.
 
 To clear all caches, delete the contents of the `data/cache` directory and
 restart the application.
+
+### Degraded Mode
+
+If the connection to the language model fails, Jan Assistant Pro enters a
+degraded mode. The last successful tool output is returned so you can keep
+working offline. The incident is logged and normal responses resume once the
+API becomes available.
 
 ### Jan.ai Setup
 
