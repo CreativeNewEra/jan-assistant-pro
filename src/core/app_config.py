@@ -76,7 +76,8 @@ class AppConfig:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except Exception:
+            except Exception as e:
+                logging.warning(f"Failed to load configuration from {path}: {e}")
                 return None
 
         default_path = os.path.join(os.getcwd(), "config", "config.json")
