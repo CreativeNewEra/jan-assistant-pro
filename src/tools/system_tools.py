@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 from src.tools.secure_command_executor import SecureCommandExecutor
 
 from src.core.logging_config import get_logger
+from src.core.metrics import record_tool
 
 
 class SystemTools:
@@ -90,6 +91,7 @@ class SystemTools:
 
         return command.strip()
 
+    @record_tool("run_command")
     def run_command(
         self,
         command: str,
@@ -127,6 +129,7 @@ class SystemTools:
             shell=shell,
         )
 
+    @record_tool("get_system_info")
     def get_system_info(self) -> Dict[str, Any]:
         """
         Get system information
@@ -179,6 +182,7 @@ class SystemTools:
         except Exception as e:
             return {"success": False, "error": f"Error getting system info: {str(e)}"}
 
+    @record_tool("list_processes")
     def list_processes(self, filter_name: str = None) -> Dict[str, Any]:
         """
         List running processes
@@ -232,6 +236,7 @@ class SystemTools:
         except Exception as e:
             return {"success": False, "error": f"Error listing processes: {str(e)}"}
 
+    @record_tool("get_environment_variables")
     def get_environment_variables(self, pattern: str = None) -> Dict[str, Any]:
         """
         Get environment variables
@@ -262,6 +267,7 @@ class SystemTools:
                 "error": f"Error getting environment variables: {str(e)}",
             }
 
+    @record_tool("check_network_connectivity")
     def check_network_connectivity(
         self, host: str = "8.8.8.8", timeout: int = 5
     ) -> Dict[str, Any]:
@@ -304,6 +310,7 @@ class SystemTools:
         except Exception as e:
             return {"success": False, "error": f"Error checking connectivity: {str(e)}"}
 
+    @record_tool("get_current_directory")
     def get_current_directory(self) -> Dict[str, Any]:
         """
         Get current working directory

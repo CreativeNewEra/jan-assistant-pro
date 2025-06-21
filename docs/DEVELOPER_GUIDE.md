@@ -420,6 +420,11 @@ def expensive_operation():
     pass
 ```
 
+### Metrics Collection
+
+Jan Assistant Pro exposes Prometheus metrics for monitoring. Start the metrics
+server and access `/metrics` to collect runtime statistics.
+
 ### Structured Logging
 
 ```python

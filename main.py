@@ -9,6 +9,7 @@ import sys
 from tkinter import messagebox
 
 from src.core.logging_config import get_logger, setup_logging
+from src.core.metrics import start_metrics_server
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
@@ -33,6 +34,9 @@ def main():
     try:
         # Load configuration
         config = Config()
+
+        # Start metrics server
+        start_metrics_server()
 
         # Create and run GUI
         app = JanAssistantGUI(config)

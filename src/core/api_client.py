@@ -7,6 +7,8 @@ import json
 import time
 from typing import Any, Dict, List, Optional
 
+from src.core.metrics import api_calls, api_errors, api_latency
+
 import httpx
 
 
@@ -23,7 +25,10 @@ class AsyncAPIClient:
     def _create_session(self) -> httpx.AsyncClient:
         client = httpx.AsyncClient(timeout=self.timeout)
         client.headers.update(
-            {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}
+            {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}",
+            }
         )
         return client
 
@@ -62,33 +67,49 @@ class AsyncAPIClient:
             payload["max_tokens"] = max_tokens
 
         session = await self._ensure_session()
+        api_calls.inc()
+        start_time = time.perf_counter()
         try:
             response = await session.post(url, json=payload)
             response.raise_for_status()
-            return response.json()
-
+            result = response.json()
         except httpx.TimeoutException:
+            api_errors.inc()
             raise APIError("Request timed out")
         except httpx.RequestError:
+            api_errors.inc()
             raise APIError("Could not connect to API server. Is Jan running?")
         except httpx.HTTPStatusError as e:
             response = e.response
             if response.status_code == 400:
                 error_detail = response.json().get("message", "Unknown error")
                 if "Engine is not loaded" in error_detail:
-                    raise APIError("Model is not loaded in Jan. Please start your model first.")
+                    api_errors.inc()
+                    raise APIError(
+                        "Model is not loaded in Jan. Please start your model first."
+                    )
                 else:
+                    api_errors.inc()
                     raise APIError(f"Bad request: {error_detail}")
             elif response.status_code == 401:
+                api_errors.inc()
                 raise APIError("Authentication failed. Check your API key.")
             elif response.status_code == 404:
+                api_errors.inc()
                 raise APIError("API endpoint not found. Check your base URL.")
             else:
+                api_errors.inc()
                 raise APIError(f"HTTP {response.status_code}: {response.text}")
         except json.JSONDecodeError:
+            api_errors.inc()
             raise APIError("Invalid JSON response from server")
         except Exception as e:  # pragma: no cover - unexpected branch
+            api_errors.inc()
             raise APIError(f"Unexpected error: {str(e)}")
+        finally:
+            api_latency.observe(time.perf_counter() - start_time)
+
+        return result
 
     async def get_models(self) -> List[Dict[str, Any]]:
         url = f"{self.base_url}/models"
@@ -176,7 +197,7 @@ class APIClient:
     def close(self) -> None:
         """Close the underlying asynchronous client."""
         self._run(self._async_client.close())
-    
+
     def chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -194,70 +215,71 @@ class APIClient:
                 max_tokens=max_tokens,
             )
         )
-    
+
     def get_models(self) -> List[Dict[str, Any]]:
         """Synchronously fetch available models."""
         return self._run(self._async_client.get_models())
-    
+
     def health_check(self) -> bool:
         """Synchronously check API health."""
         return self._run(self._async_client.health_check())
-    
+
     def test_connection(self) -> Dict[str, Any]:
         """Synchronously test the connection and return status information."""
         return self._run(self._async_client.test_connection())
-    
+
     def extract_content(self, response: Dict[str, Any]) -> str:
         """
         Extract the content from a chat completion response
-        
+
         Args:
             response: The response dictionary from chat_completion
-            
+
         Returns:
             The text content of the response
         """
         try:
-            return response['choices'][0]['message']['content']
+            return response["choices"][0]["message"]["content"]
         except (KeyError, IndexError):
             raise APIError("Invalid response format: missing content")
-    
+
     def extract_reasoning(self, response: Dict[str, Any]) -> Optional[str]:
         """
         Extract reasoning content if available (for models that support it)
-        
+
         Args:
             response: The response dictionary from chat_completion
-            
+
         Returns:
             The reasoning content or None if not available
         """
         try:
-            return response['choices'][0]['message'].get('reasoning_content')
+            return response["choices"][0]["message"].get("reasoning_content")
         except (KeyError, IndexError):
             return None
-    
+
     def get_usage_stats(self, response: Dict[str, Any]) -> Dict[str, int]:
         """
         Extract usage statistics from response
-        
+
         Args:
             response: The response dictionary from chat_completion
-            
+
         Returns:
             Dictionary with token usage information
         """
         try:
-            usage = response.get('usage', {})
+            usage = response.get("usage", {})
             return {
-                'prompt_tokens': usage.get('prompt_tokens', 0),
-                'completion_tokens': usage.get('completion_tokens', 0),
-                'total_tokens': usage.get('total_tokens', 0)
+                "prompt_tokens": usage.get("prompt_tokens", 0),
+                "completion_tokens": usage.get("completion_tokens", 0),
+                "total_tokens": usage.get("total_tokens", 0),
             }
         except Exception:
-            return {'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
+            return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
 
 class APIError(Exception):
     """Custom exception for API-related errors"""
+
     pass
