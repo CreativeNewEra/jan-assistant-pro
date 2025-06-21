@@ -51,8 +51,9 @@ def test_check_network_connectivity_failure_result_error():
     assert "not allowed" in result["error"]
 
 
-def test_check_network_connectivity_with_default_config(tmp_path):
-    cfg = UnifiedConfig(config_path=str(tmp_path / "config.json"))
+@pytest.mark.parametrize("mock_unified_config", ["default"], indirect=True)
+def test_check_network_connectivity_with_default_config(mock_unified_config):
+    cfg = mock_unified_config
     tools = SystemTools(allowed_commands=cfg.get("security.allowed_commands"))
     assert "ping" in tools.allowed_commands
     mock_result = {'success': True, 'return_code': 0, 'stdout': 'ok', 'stderr': ''}

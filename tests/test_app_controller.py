@@ -10,8 +10,12 @@ from src.core.app_controller import AppController
 from src.core.exceptions import APIError
 
 
-def test_chat_with_tools_api_error_no_cache(temp_config):
-    cfg = temp_config
+import pytest
+
+
+@pytest.mark.parametrize("mock_config", ["default"], indirect=True)
+def test_chat_with_tools_api_error_no_cache(mock_config):
+    cfg = mock_config
     controller = AppController(cfg)
     with patch.object(
         controller.api_client, "chat_completion", side_effect=APIError("boom")
@@ -20,8 +24,9 @@ def test_chat_with_tools_api_error_no_cache(temp_config):
     assert "unable to reach" in message.lower()
 
 
-def test_chat_with_tools_api_error_with_cached_result(temp_config):
-    cfg = temp_config
+@pytest.mark.parametrize("mock_config", ["default"], indirect=True)
+def test_chat_with_tools_api_error_with_cached_result(mock_config):
+    cfg = mock_config
     controller = AppController(cfg)
     controller.last_tool_result = "cached result"
     with patch.object(
