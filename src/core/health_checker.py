@@ -21,7 +21,7 @@ class HealthChecker:
     def _check_memory(self) -> Dict[str, Any]:
         mem = psutil.virtual_memory()
         return {
-            "ok": mem.percent < 90,
+            "ok": mem.percent < self.MEMORY_USAGE_THRESHOLD,
             "total": mem.total,
             "used": mem.used,
             "percent": mem.percent,
