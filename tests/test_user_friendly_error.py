@@ -1,5 +1,4 @@
 import os
-import stat
 
 from src.tools.file_tools import FileTools
 
