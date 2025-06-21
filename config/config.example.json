@@ -5,7 +5,12 @@
         "model": "qwen3:30b-a3b",
         "timeout": 30,
     },
-    "memory": {"file": "data/memory.json", "max_entries": 1000, "auto_save": true},
+    "memory": {
+        "file": "data/memory.json",
+        "db": "data/memory.sqlite",
+        "max_entries": 1000,
+        "auto_save": true,
+    },
     "ui": {
         "theme": "dark",
         "window_size": "800x600",

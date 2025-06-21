@@ -152,6 +152,17 @@ Set a value to `0` to disable a cache. TTL values are in seconds.
 To clear all caches, delete the contents of the `data/cache` directory and
 restart the application.
 
+### Database Migrations
+
+The SQLite memory database is versioned with a lightweight migration system.
+Migrations are stored in `src/migrations/` and run automatically when the
+`EnhancedMemoryManager` starts. You can apply or rollback migrations manually:
+
+```bash
+python -m src.core.migration_manager data/memory.sqlite        # apply pending
+python -m src.core.migration_manager data/memory.sqlite --rollback 1
+```
+
 ### Degraded Mode
 
 If the connection to the language model fails, Jan Assistant Pro enters a

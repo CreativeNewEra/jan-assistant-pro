@@ -396,25 +396,9 @@ class EnhancedMemoryManager:
         """Initialize SQLite database"""
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with self._get_connection() as conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS memories (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL,
-                    category TEXT DEFAULT 'general',
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    access_count INTEGER DEFAULT 0,
-                    last_accessed DATETIME
-                )
-                """
-            )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_category ON memories(category)"
-            )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_timestamp ON memories(timestamp)"
-            )
+        from .migration_manager import apply_migrations
+
+        apply_migrations(str(self.db_path))
 
     @contextmanager
     def _get_connection(self):

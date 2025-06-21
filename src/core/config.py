@@ -17,7 +17,9 @@ from .logging_config import get_logger
 class Config:
     """Configuration manager for the application"""
 
-    def __init__(self, config_path: str = None, event_manager: EventManager | None = None):
+    def __init__(
+        self, config_path: str = None, event_manager: EventManager | None = None
+    ):
         self.config_path = config_path or self._find_config_path()
         self.event_manager = event_manager
         self.logger = get_logger(
@@ -93,6 +95,7 @@ class Config:
             },
             "memory": {
                 "file": "data/memory.json",
+                "db": "data/memory.sqlite",
                 "max_entries": 1000,
                 "auto_save": True,
             },
@@ -220,6 +223,10 @@ class Config:
     @property
     def memory_file(self) -> str:
         return self.get("memory.file", "data/memory.json")
+
+    @property
+    def memory_db_path(self) -> str:
+        return self.get("memory.db", "data/memory.sqlite")
 
     @property
     def window_size(self) -> str:
