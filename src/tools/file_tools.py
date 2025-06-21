@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
 
+from src.core.cache import MEMORY_TTL_CACHE
 from src.core.logging_config import get_logger
 from src.core.metrics import record_tool
 
@@ -66,6 +67,11 @@ class FileTools:
         Returns:
             Dictionary with success status and content or error message
         """
+        cache_key = f"read:{Path(file_path).resolve()}:{encoding}"
+        cached = MEMORY_TTL_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
+
         try:
             # Security checks
             if not self._is_path_allowed(file_path):
@@ -90,12 +96,14 @@ class FileTools:
             with open(file_path, "r", encoding=encoding) as f:
                 content = f.read()
 
-            return {
+            result = {
                 "success": True,
                 "content": content,
                 "file_path": file_path,
                 "size_bytes": len(content.encode(encoding)),
             }
+            MEMORY_TTL_CACHE[cache_key] = result
+            return result
 
         except UnicodeDecodeError:
             return {
