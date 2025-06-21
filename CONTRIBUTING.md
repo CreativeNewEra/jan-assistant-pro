@@ -347,14 +347,9 @@ Add any other context about the feature request.
    ruff src/ tests/
    ```
 
-4. **Run security checks**
-   ```bash
-   poetry run bandit -r src/
-   poetry run safety check
-   ```
-5. **Update documentation** if needed
+4. **Update documentation** if needed
 
-6. **Commit with clear message**
+5. **Commit with clear message**
    ```bash
    git commit -m "feat: add amazing new feature
    
@@ -367,7 +362,6 @@ Add any other context about the feature request.
 
 - [ ] Code follows project style guidelines
 - [ ] Tests pass (`python -m pytest tests/`)
-- [ ] Security checks pass (`poetry run bandit -r src/` and `poetry run safety check`)
 - [ ] New features include tests
 - [ ] Documentation updated if needed
 - [ ] PR description explains changes
