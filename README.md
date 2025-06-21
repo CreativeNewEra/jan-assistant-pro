@@ -20,6 +20,7 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 - 🔵 **Connection Indicator**: Real-time API status with latency
 - ⬆️⬇️ **History Navigation**: Cycle through previous prompts
 - ✨ **Autocomplete**: Suggestions while typing commands
+- 🖱️ **Drag & Drop**: Drop files to pre-fill commands
 - ⌨️ **Keyboard Shortcuts**: Ctrl+S save, Ctrl+M memory, Ctrl+Z/Y undo/redo, F1 help
 - 🧩 **Plugin Loader**: Load third-party tools dynamically
 

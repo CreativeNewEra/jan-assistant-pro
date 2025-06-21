@@ -26,6 +26,7 @@
 - **Comprehensive Testing**: Full test coverage
 - **Progress Bar** and **Connection Indicator** for clear status
 - **History Navigation** with **Autocomplete** in the GUI
+- **Drag & Drop** support for quickly loading files
 - **Keyboard Shortcuts**: Ctrl+S save, Ctrl+M memory, Ctrl+Z/Y undo/redo, F1 help
 
 ## Architecture
