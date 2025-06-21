@@ -8,7 +8,7 @@ sys.path.insert(
 
 from src.core.app_controller import AppController
 from src.core.config import Config
-from src.core.api_client import APIError
+from src.core.exceptions import APIError
 
 
 def _create_config(tmp_path):

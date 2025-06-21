@@ -4,7 +4,8 @@ import time
 import pytest
 
 
-from src.core.api_client import APIClient, APIError
+from src.core.api_client import APIClient
+from src.core.exceptions import APIError
 from src.core.circuit_breaker import CircuitBreaker
 
 
