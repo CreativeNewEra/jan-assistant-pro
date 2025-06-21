@@ -5,9 +5,11 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from cachetools import TTLCache
 from dotenv import load_dotenv
 
 from .config_validator import ConfigValidator
@@ -39,12 +41,17 @@ class UnifiedConfig:
         )
         self.validator = schema or ConfigValidator()
         self.config_data: Dict[str, Any] = {}
+        self._cache: TTLCache | None = None
+        self._last_load: float = 0.0
         self.reload()
+        self._init_cache()
 
     def _find_config_path(self) -> str:
         possible_paths = [
             os.path.join(os.getcwd(), "config", "config.json"),
-            os.path.join(Path(__file__).resolve().parent.parent, "config", "config.json"),
+            os.path.join(
+                Path(__file__).resolve().parent.parent, "config", "config.json"
+            ),
             os.path.expanduser("~/.jan-assistant-pro/config.json"),
         ]
         for path in possible_paths:
@@ -55,6 +62,20 @@ class UnifiedConfig:
     def _ensure_config_dir(self) -> None:
         config_dir = os.path.dirname(self.config_path)
         os.makedirs(config_dir, exist_ok=True)
+
+    def _init_cache(self) -> None:
+        cache_cfg = self.config_data.get("cache", {}).get("config", {})
+        size = int(cache_cfg.get("size", 4))
+        ttl = int(cache_cfg.get("ttl", 300))
+        self._cache = TTLCache(maxsize=size, ttl=ttl)
+        self._cache[self.config_path] = {
+            "data": self.config_data,
+            "timestamp": self._last_load,
+        }
+
+    def _check_reload(self) -> None:
+        if self._cache is not None and self._cache.get(self.config_path) is None:
+            self.reload()
 
     def _get_default_config(self) -> Dict[str, Any]:
         return {
@@ -97,15 +118,25 @@ class UnifiedConfig:
                 "restricted_paths": ["/etc", "/sys", "/proc"],
                 "max_file_size": "10MB",
             },
+            "cache": {"config": {"ttl": 300, "size": 4}},
         }
 
     # ------------------------------------------------------------------
     # Loading and validation
     # ------------------------------------------------------------------
     def reload(self) -> None:
+        if self._cache is not None:
+            self._cache.pop(self.config_path, None)
         self.config_data = self._load_config()
+        self._init_cache()
 
     def _load_config(self) -> Dict[str, Any]:
+        if self._cache is not None:
+            cached = self._cache.get(self.config_path)
+            if cached is not None:
+                self._last_load = cached["timestamp"]
+                return cached["data"]
+
         if os.path.exists(self.config_path):
             try:
                 with open(self.config_path, "r", encoding="utf-8") as f:
@@ -122,7 +153,14 @@ class UnifiedConfig:
             self.save_config(data)
 
         data = self._apply_env_overrides(data)
-        return self.validator.validate_config_data(data)
+        validated = self.validator.validate_config_data(data)
+        self._last_load = time.time()
+        if self._cache is not None:
+            self._cache[self.config_path] = {
+                "data": validated,
+                "timestamp": self._last_load,
+            }
+        return validated
 
     def _apply_env_overrides(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
         for field_path in self.validator.schema.rules.keys():
@@ -165,6 +203,7 @@ class UnifiedConfig:
     # Public API
     # ------------------------------------------------------------------
     def get(self, key_path: str, default: Any = None) -> Any:
+        self._check_reload()
         keys = key_path.split(".")
         value: Any = self.config_data
         for key in keys:
@@ -175,6 +214,7 @@ class UnifiedConfig:
         return value
 
     def set(self, key_path: str, value: Any) -> None:
+        self._check_reload()
         self._set_nested_value(self.config_data, key_path, value)
 
     def save_config(self, config_data: Optional[Dict[str, Any]] = None) -> None:
@@ -207,3 +247,15 @@ class UnifiedConfig:
 
     def __str__(self) -> str:
         return f"UnifiedConfig(path={self.config_path})"
+
+    @property
+    def config_cache_ttl(self) -> int:
+        return int(self.get("cache.config.ttl", 300))
+
+    @property
+    def config_cache_size(self) -> int:
+        return int(self.get("cache.config.size", 4))
+
+    @property
+    def last_loaded(self) -> float:
+        return self._last_load
