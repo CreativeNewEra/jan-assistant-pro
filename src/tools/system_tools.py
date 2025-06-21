@@ -158,7 +158,7 @@ class SystemTools:
         if use_cache:
             if self.disk_cache:
                 cached = self.disk_cache.get(cache_key)
-        if cached is not None and use_cache and not clear_cache:
+        if cached is not None and not clear_cache:
             return cached
 
         try:
