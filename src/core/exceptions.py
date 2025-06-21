@@ -5,6 +5,8 @@ Provides structured error handling throughout the application
 
 from typing import Any, Dict, Optional
 
+from .error_reporter import record_error
+
 
 class JanAssistantError(Exception):
     """Base exception for all Jan Assistant Pro errors"""
@@ -153,6 +155,7 @@ def handle_exception(exc: Exception) -> Dict[str, Any]:
     Returns:
         Standardized error dictionary
     """
+    record_error(exc)
     if isinstance(exc, JanAssistantError):
         return {
             'success': False,
