@@ -40,6 +40,8 @@ class JanAssistantGUI:
         self.root = tk.Tk()
         self.root.title("🤖 Jan Assistant Pro")
         self.root.geometry(self.config.window_size)
+        self.root.bind("<Control-z>", lambda e: self.undo_action())
+        self.root.bind("<Control-y>", lambda e: self.redo_action())
 
         # Apply theme
         if self.config.theme == "dark":
@@ -155,6 +157,8 @@ class JanAssistantGUI:
             ("⚙️ Settings", self.show_settings, "#607D8B"),
             ("🔧 Test API", self.test_api, "#2196F3"),
             ("🗑️ Clear", self.clear_chat, "#F44336"),
+            ("↩️ Undo", self.undo_action, "#795548"),
+            ("↪️ Redo", self.redo_action, "#009688"),
         ]
 
         for text, command, color in buttons:
@@ -407,6 +411,20 @@ class JanAssistantGUI:
             self.chat_display.config(state=tk.DISABLED)
             self.controller.conversation_history = []
             self.add_to_chat("🤖 Assistant", "Chat cleared! How can I help?")
+
+    def undo_action(self):
+        """Undo last operation and show result."""
+        if self.controller.undo_last():
+            self.add_to_chat("System", "Undone")
+        else:
+            self.add_to_chat("System", "Nothing to undo")
+
+    def redo_action(self):
+        """Redo last undone operation and show result."""
+        if self.controller.redo_last():
+            self.add_to_chat("System", "Redone")
+        else:
+            self.add_to_chat("System", "Nothing to redo")
 
     def run(self):
         """Start the GUI main loop"""

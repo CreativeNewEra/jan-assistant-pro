@@ -13,6 +13,11 @@ from src.core.circuit_breaker import CircuitBreaker
 from src.core.memory import MemoryManager
 from src.tools.file_tools import FileTools
 from src.tools.system_tools import SystemTools
+from src.core.history import (
+    UndoRedoManager,
+    FileWriteCommand,
+    MemoryRememberCommand,
+)
 
 
 class AppController(LoggerMixin):
@@ -54,6 +59,9 @@ class AppController(LoggerMixin):
             allowed_commands=list(config.get("security.allowed_commands", [])),
             timeout=int(config.get("api.timeout", 30)),
         )
+
+        # History manager for undo/redo
+        self.history = UndoRedoManager()
 
     def process_message(self, message: str) -> Dict[str, Any]:
         """
@@ -143,7 +151,8 @@ class AppController(LoggerMixin):
             parts = response.split("TOOL_WRITE_FILE:")[1].strip().split("|", 1)
             filename = parts[0].strip()
             content = parts[1].strip() if len(parts) > 1 else ""
-            result = self.file_tools.write_file(filename, content)
+            cmd = FileWriteCommand(self.file_tools, filename, content)
+            result = self.history.execute(cmd)
             formatted = self._format_tool_result(result)
             self.last_tool_result = formatted
             return formatted
@@ -180,7 +189,8 @@ class AppController(LoggerMixin):
             value = parts[1].strip() if len(parts) > 1 else ""
             category = parts[2].strip() if len(parts) > 2 else "general"
 
-            success = self.memory_manager.remember(key, value, category)
+            cmd = MemoryRememberCommand(self.memory_manager, key, value, category)
+            success = self.history.execute(cmd)
             result = (
                 f"Successfully remembered: {key} = {value}"
                 if success
@@ -326,3 +336,11 @@ class AppController(LoggerMixin):
             "   • API health monitoring\n\n"
             "What would you like me to help you with?"
         )
+
+    def undo_last(self) -> bool:
+        """Undo the last file or memory operation."""
+        return self.history.undo_last()
+
+    def redo_last(self) -> bool:
+        """Redo the last undone operation."""
+        return self.history.redo_last()
