@@ -6,7 +6,7 @@ import os
 import platform
 from typing import Any, Dict, List
 
-from src.core.cache import MEMORY_TTL_CACHE
+from src.core.cache import DiskCache
 from src.core.logging_config import get_logger
 from src.core.metrics import record_tool
 from src.tools.secure_command_executor import SecureCommandExecutor
@@ -20,6 +20,9 @@ class SystemTools:
         allowed_commands: List[str] | None = None,
         blocked_commands: List[str] | None = None,
         timeout: int = 30,
+        *,
+        disk_cache_dir: str | None = "data/cache/system_tools",
+        disk_cache_ttl: int = 300,
     ):
         self.allowed_commands = allowed_commands or [
             "ls",
@@ -53,6 +56,12 @@ class SystemTools:
             f"{self.__class__.__module__}.{self.__class__.__name__}",
             {"timeout": self.timeout},
         )
+        self.disk_cache = DiskCache(disk_cache_dir, default_ttl=disk_cache_ttl) if disk_cache_dir else None
+
+    def clear_disk_cache(self) -> None:
+        """Clear the system tool disk cache."""
+        if self.disk_cache:
+            self.disk_cache.clear()
 
     def _is_command_allowed(self, command: str) -> bool:
         """Check if a command is in the allowed list"""
@@ -129,7 +138,13 @@ class SystemTools:
         )
 
     @record_tool("get_system_info")
-    def get_system_info(self) -> Dict[str, Any]:
+    def get_system_info(
+        self,
+        *,
+        use_cache: bool = True,
+        clear_cache: bool = False,
+        ttl: int | None = None,
+    ) -> Dict[str, Any]:
         """
         Get system information
 
@@ -137,8 +152,13 @@ class SystemTools:
             Dictionary with system information
         """
         cache_key = "system_info"
-        cached = MEMORY_TTL_CACHE.get(cache_key)
-        if cached is not None:
+        if clear_cache and self.disk_cache:
+            self.disk_cache.delete(cache_key)
+        cached = None
+        if use_cache:
+            if self.disk_cache:
+                cached = self.disk_cache.get(cache_key)
+        if cached is not None and use_cache and not clear_cache:
             return cached
 
         try:
@@ -172,7 +192,8 @@ class SystemTools:
                     "usage_percent": round((disk.used / disk.total) * 100, 1),
                 },
             }
-            MEMORY_TTL_CACHE[cache_key] = result
+            if use_cache and self.disk_cache:
+                self.disk_cache.set(cache_key, result, ttl)
             return result
 
         except ImportError:

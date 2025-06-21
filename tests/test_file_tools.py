@@ -1,4 +1,5 @@
 import os
+import time
 
 from src.tools.file_tools import FileTools
 
@@ -100,3 +101,27 @@ def test_append_file_atomic_failure(monkeypatch, tmp_path):
     assert result["success"] is False
     assert file_path.read_text() == "orig"
     assert list(tmp_path.iterdir()) == [file_path]
+
+
+def test_list_files_disk_cache(tmp_path):
+    cache_dir = tmp_path / "cache"
+    tools = FileTools(disk_cache_dir=str(cache_dir), disk_cache_ttl=1)
+
+    (tmp_path / "a.txt").write_text("1")
+    result1 = tools.list_files(str(tmp_path))
+    assert result1["total_files"] == 1
+
+    (tmp_path / "b.txt").write_text("2")
+    result_cached = tools.list_files(str(tmp_path))
+    assert result_cached["total_files"] == 1
+
+    time.sleep(1.1)
+    result2 = tools.list_files(str(tmp_path))
+    assert result2["total_files"] == 2
+
+    result_bypass = tools.list_files(str(tmp_path), use_cache=False)
+    assert result_bypass["total_files"] == 2
+
+    (tmp_path / "c.txt").write_text("3")
+    result_clear = tools.list_files(str(tmp_path), clear_cache=True)
+    assert result_clear["total_files"] == 3

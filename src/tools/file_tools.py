@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
 
-from src.core.cache import MEMORY_TTL_CACHE
+from src.core.cache import MEMORY_TTL_CACHE, DiskCache
 from src.core.logging_config import get_logger
 from src.core.metrics import record_tool
 
@@ -16,13 +16,26 @@ from src.core.metrics import record_tool
 class FileTools:
     """Tools for file operations"""
 
-    def __init__(self, max_file_size: str = "10MB", restricted_paths: List[str] = None):
+    def __init__(
+        self,
+        max_file_size: str = "10MB",
+        restricted_paths: List[str] = None,
+        *,
+        disk_cache_dir: str | None = "data/cache/file_tools",
+        disk_cache_ttl: int = 300,
+    ):
         self.max_file_size = self._parse_size(max_file_size)
         self.restricted_paths = restricted_paths or ["/etc", "/sys", "/proc", "/dev"]
         self.logger = get_logger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
             {"max_file_size": self.max_file_size},
         )
+        self.disk_cache = DiskCache(disk_cache_dir, default_ttl=disk_cache_ttl) if disk_cache_dir else None
+
+    def clear_disk_cache(self) -> None:
+        """Clear the file tool disk cache."""
+        if self.disk_cache:
+            self.disk_cache.clear()
 
     def _parse_size(self, size_str: str) -> int:
         """Parse size string like '10MB' to bytes"""
@@ -308,7 +321,14 @@ class FileTools:
 
     @record_tool("list_files")
     def list_files(
-        self, directory: str = ".", pattern: str = "*", include_hidden: bool = False
+        self,
+        directory: str = ".",
+        pattern: str = "*",
+        include_hidden: bool = False,
+        *,
+        use_cache: bool = True,
+        clear_cache: bool = False,
+        ttl: int | None = None,
     ) -> Dict[str, Any]:
         """
         List files in a directory
@@ -322,6 +342,14 @@ class FileTools:
             Dictionary with success status and file list or error message
         """
         try:
+            cache_key = f"list:{Path(directory).resolve()}:{pattern}:{include_hidden}"
+            if clear_cache and self.disk_cache:
+                self.disk_cache.delete(cache_key)
+            if use_cache and self.disk_cache and not clear_cache:
+                cached = self.disk_cache.get(cache_key)
+                if cached is not None:
+                    return cached
+
             # Security checks
             if not self._is_path_allowed(directory):
                 return {
@@ -361,7 +389,7 @@ class FileTools:
                 elif item.is_dir():
                     directories.append(item_info)
 
-            return {
+            result = {
                 "success": True,
                 "directory": directory,
                 "files": sorted(files, key=lambda x: x["name"]),
@@ -369,6 +397,9 @@ class FileTools:
                 "total_files": len(files),
                 "total_directories": len(directories),
             }
+            if use_cache and self.disk_cache and not clear_cache:
+                self.disk_cache.set(cache_key, result, ttl)
+            return result
 
         except PermissionError:
             return {
