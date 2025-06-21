@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from src.core.logging_config import get_logger
+from src.core.metrics import record_tool
 
 
 class FileTools:
@@ -53,6 +54,7 @@ class FileTools:
         except OSError:
             return True  # If we can't get size, allow the operation
 
+    @record_tool("read_file")
     def read_file(self, file_path: str, encoding: str = "utf-8") -> Dict[str, Any]:
         """
         Read a file
@@ -111,6 +113,7 @@ class FileTools:
                 "error": f"Error reading file '{file_path}': {str(e)}",
             }
 
+    @record_tool("write_file")
     def write_file(
         self,
         file_path: str,
@@ -186,6 +189,7 @@ class FileTools:
                 "error": f"Error writing file '{file_path}': {str(e)}",
             }
 
+    @record_tool("append_file")
     def append_file(
         self, file_path: str, content: str, encoding: str = "utf-8"
     ) -> Dict[str, Any]:
@@ -249,6 +253,7 @@ class FileTools:
                 "error": f"Error appending to file '{file_path}': {str(e)}",
             }
 
+    @record_tool("delete_file")
     def delete_file(self, file_path: str) -> Dict[str, Any]:
         """
         Delete a file
@@ -293,6 +298,7 @@ class FileTools:
                 "error": f"Error deleting file '{file_path}': {str(e)}",
             }
 
+    @record_tool("list_files")
     def list_files(
         self, directory: str = ".", pattern: str = "*", include_hidden: bool = False
     ) -> Dict[str, Any]:
@@ -367,6 +373,7 @@ class FileTools:
                 "error": f"Error listing directory '{directory}': {str(e)}",
             }
 
+    @record_tool("copy_file")
     def copy_file(
         self, source: str, destination: str, overwrite: bool = False
     ) -> Dict[str, Any]:
@@ -429,6 +436,7 @@ class FileTools:
         except Exception as e:
             return {"success": False, "error": f"Error copying file: {str(e)}"}
 
+    @record_tool("get_file_info")
     def get_file_info(self, file_path: str) -> Dict[str, Any]:
         """
         Get information about a file

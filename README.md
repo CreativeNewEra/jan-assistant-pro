@@ -30,6 +30,7 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 - 🔧 **Professional Architecture**: Clean MVC separation with extensible design
 - 🔒 **Privacy First**: Everything runs locally, your data stays yours
 - ⚙️ **Enterprise Configuration**: Validated JSON configuration with rich schemas
+- 📈 **Prometheus Metrics**: Built-in metrics endpoint for monitoring
 
 ## 📸 Screenshots
 
