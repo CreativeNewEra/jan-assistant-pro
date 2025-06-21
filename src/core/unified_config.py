@@ -63,6 +63,9 @@ class UnifiedConfig:
                 "api_key": "124578",
                 "model": "qwen3:30b-a3b",
                 "timeout": 30,
+                "cache_enabled": False,
+                "cache_ttl": 300,
+                "cache_size": 128,
             },
             "memory": {
                 "file": "data/memory.json",

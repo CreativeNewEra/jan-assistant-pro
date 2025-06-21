@@ -5,6 +5,9 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict, List, Optional
 
+from .cache import TTLCache
+import json
+
 import aiohttp
 
 from .exceptions import APIError
@@ -13,11 +16,23 @@ from .exceptions import APIError
 class AsyncAPIClient:
     """Async client for interacting with OpenAI-compatible APIs."""
 
-    def __init__(self, base_url: str, api_key: str, model: str, timeout: int = 30):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        timeout: int = 30,
+        *,
+        cache_enabled: bool = False,
+        cache_ttl: int = 300,
+        cache_size: int = 128,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
+        self.cache_enabled = cache_enabled
+        self._cache = TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_enabled else None
         self.session: Optional[aiohttp.ClientSession] = None
 
     async def __aenter__(self) -> "AsyncAPIClient":
@@ -44,6 +59,11 @@ class AsyncAPIClient:
         assert self.session is not None
         return self.session
 
+    def clear_api_cache(self) -> None:
+        """Clear the internal API response cache."""
+        if self._cache is not None:
+            self._cache.clear()
+
     async def chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -63,6 +83,12 @@ class AsyncAPIClient:
         }
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
+
+        cache_key = json.dumps(payload, sort_keys=True)
+        if self.cache_enabled and self._cache is not None:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
 
         try:
             async with session.post(url, json=payload, timeout=self.timeout) as resp:
@@ -88,7 +114,10 @@ class AsyncAPIClient:
                         raise APIError("API endpoint not found. Check your base URL.")
                     raise APIError(f"HTTP {resp.status}: {error_detail}")
 
-                return await resp.json()
+                result = await resp.json()
+                if self.cache_enabled and self._cache is not None:
+                    self._cache[cache_key] = result
+                return result
         except asyncio.TimeoutError as exc:
             raise APIError("Request timed out") from exc
         except aiohttp.ClientError as exc:
@@ -101,11 +130,20 @@ class AsyncAPIClient:
         session = await self._ensure_session()
         url = f"{self.base_url}/models"
 
+        cache_key = "get_models"
+        if self.cache_enabled and self._cache is not None:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
+
         try:
             async with session.get(url, timeout=self.timeout) as resp:
                 resp.raise_for_status()
                 data = await resp.json()
-                return data.get("data", [])
+                models = data.get("data", [])
+                if self.cache_enabled and self._cache is not None:
+                    self._cache[cache_key] = models
+                return models
         except asyncio.TimeoutError as exc:
             raise APIError("Request timed out") from exc
         except aiohttp.ClientError as exc:

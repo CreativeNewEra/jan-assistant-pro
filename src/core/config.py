@@ -65,6 +65,9 @@ class Config:
                 "api_key": "124578",
                 "model": "qwen3:30b-a3b",
                 "timeout": 30,
+                "cache_enabled": False,
+                "cache_ttl": 300,
+                "cache_size": 128,
             },
             "memory": {
                 "file": "data/memory.json",
@@ -173,6 +176,18 @@ class Config:
     @property
     def theme(self) -> str:
         return self.get("ui.theme", "dark")
+
+    @property
+    def cache_enabled(self) -> bool:
+        return bool(self.get("api.cache_enabled", False))
+
+    @property
+    def cache_ttl(self) -> int:
+        return int(self.get("api.cache_ttl", 300))
+
+    @property
+    def cache_size(self) -> int:
+        return int(self.get("api.cache_size", 128))
 
     def __str__(self):
         return f"Config(path={self.config_path})"

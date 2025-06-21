@@ -24,7 +24,10 @@ class AppController:
             base_url=config.api_base_url,
             api_key=config.api_key,
             model=config.model_name,
-            timeout=int(config.get('api.timeout', 30))
+            timeout=int(config.get('api.timeout', 30)),
+            cache_enabled=bool(config.get('api.cache_enabled', False)),
+            cache_ttl=int(config.get('api.cache_ttl', 300)),
+            cache_size=int(config.get('api.cache_size', 128)),
         )
 
         self.memory_manager = MemoryManager(

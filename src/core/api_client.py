@@ -7,6 +7,8 @@ import json
 import time
 from typing import Any, Dict, List, Optional
 
+from .cache import TTLCache
+
 from src.core.metrics import api_calls, api_errors, api_latency
 
 import httpx
@@ -15,11 +17,23 @@ import httpx
 class AsyncAPIClient:
     """Asynchronous client for interacting with OpenAI-compatible APIs."""
 
-    def __init__(self, base_url: str, api_key: str, model: str, timeout: int = 30):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        timeout: int = 30,
+        *,
+        cache_enabled: bool = False,
+        cache_ttl: int = 300,
+        cache_size: int = 128,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
+        self.cache_enabled = cache_enabled
+        self._cache = TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_enabled else None
         self.session: Optional[httpx.AsyncClient] = None
 
     def _create_session(self) -> httpx.AsyncClient:
@@ -47,6 +61,11 @@ class AsyncAPIClient:
             self.session = self._create_session()
         return self.session
 
+    def clear_api_cache(self) -> None:
+        """Clear the internal API response cache."""
+        if self._cache is not None:
+            self._cache.clear()
+
     async def chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -66,6 +85,12 @@ class AsyncAPIClient:
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
 
+        cache_key = json.dumps(payload, sort_keys=True)
+        if self.cache_enabled and self._cache is not None:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
+
         session = await self._ensure_session()
         api_calls.inc()
         start_time = time.perf_counter()
@@ -73,6 +98,8 @@ class AsyncAPIClient:
             response = await session.post(url, json=payload)
             response.raise_for_status()
             result = response.json()
+            if self.cache_enabled and self._cache is not None:
+                self._cache[cache_key] = result
         except httpx.TimeoutException:
             api_errors.inc()
             raise APIError("Request timed out")
@@ -114,11 +141,20 @@ class AsyncAPIClient:
     async def get_models(self) -> List[Dict[str, Any]]:
         url = f"{self.base_url}/models"
 
+        cache_key = "get_models"
+        if self.cache_enabled and self._cache is not None:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
+
         session = await self._ensure_session()
         try:
             response = await session.get(url)
             response.raise_for_status()
-            return response.json().get("data", [])
+            data = response.json().get("data", [])
+            if self.cache_enabled and self._cache is not None:
+                self._cache[cache_key] = data
+            return data
         except Exception as e:
             raise APIError(f"Failed to get models: {str(e)}")
 
@@ -170,14 +206,30 @@ class AsyncAPIClient:
 class APIClient:
     """Synchronous wrapper around :class:`AsyncAPIClient`."""
 
-    def __init__(self, base_url: str, api_key: str, model: str, timeout: int = 30):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        timeout: int = 30,
+        *,
+        cache_enabled: bool = False,
+        cache_ttl: int = 300,
+        cache_size: int = 128,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
 
         self._async_client = AsyncAPIClient(
-            base_url=base_url, api_key=api_key, model=model, timeout=timeout
+            base_url=base_url,
+            api_key=api_key,
+            model=model,
+            timeout=timeout,
+            cache_enabled=cache_enabled,
+            cache_ttl=cache_ttl,
+            cache_size=cache_size,
         )
 
     def __enter__(self) -> "APIClient":
@@ -197,6 +249,10 @@ class APIClient:
     def close(self) -> None:
         """Close the underlying asynchronous client."""
         self._run(self._async_client.close())
+
+    def clear_api_cache(self) -> None:
+        """Clear cached API responses."""
+        self._async_client.clear_api_cache()
 
     def chat_completion(
         self,
