@@ -86,6 +86,7 @@ class Config:
                 "cache_enabled": False,
                 "cache_ttl": 300,
                 "cache_size": 128,
+                "circuit_breaker": {"fail_max": 3, "reset_timeout": 60},
             },
             "memory": {
                 "file": "data/memory.json",
@@ -230,6 +231,14 @@ class Config:
     @property
     def cache_size(self) -> int:
         return int(self.get("api.cache_size", 128))
+
+    @property
+    def breaker_fail_max(self) -> int:
+        return int(self.get("api.circuit_breaker.fail_max", 3))
+
+    @property
+    def breaker_reset_timeout(self) -> int:
+        return int(self.get("api.circuit_breaker.reset_timeout", 60))
 
     @property
     def config_cache_ttl(self) -> int:

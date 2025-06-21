@@ -6,6 +6,7 @@ import asyncio
 from typing import Any, Dict, List, Optional
 
 from .cache import TTLCache
+from .circuit_breaker import CircuitBreaker
 import json
 
 import aiohttp
@@ -26,14 +27,18 @@ class AsyncAPIClient:
         cache_enabled: bool = False,
         cache_ttl: int = 300,
         cache_size: int = 128,
+        circuit_breaker: CircuitBreaker | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
         self.cache_enabled = cache_enabled
-        self._cache = TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_enabled else None
+        self._cache = (
+            TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_enabled else None
+        )
         self.session: Optional[aiohttp.ClientSession] = None
+        self.breaker = circuit_breaker or CircuitBreaker()
 
     async def __aenter__(self) -> "AsyncAPIClient":
         if self.session is None or self.session.closed:
@@ -72,6 +77,8 @@ class AsyncAPIClient:
         max_tokens: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Send an async chat completion request."""
+        if self.breaker and not self.breaker.allow():
+            raise APIError("Circuit breaker open")
         session = await self._ensure_session()
         url = f"{self.base_url}/chat/completions"
 
@@ -88,6 +95,8 @@ class AsyncAPIClient:
         if self.cache_enabled and self._cache is not None:
             cached = self._cache.get(cache_key)
             if cached is not None:
+                if self.breaker:
+                    self.breaker.after_call(True)
                 return cached
 
         try:
@@ -117,16 +126,26 @@ class AsyncAPIClient:
                 result = await resp.json()
                 if self.cache_enabled and self._cache is not None:
                     self._cache[cache_key] = result
+                if self.breaker:
+                    self.breaker.after_call(True)
                 return result
         except asyncio.TimeoutError as exc:
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError("Request timed out") from exc
         except aiohttp.ClientError as exc:
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError("Could not connect to API server. Is Jan running?") from exc
         except Exception as exc:
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError(f"Unexpected error: {exc}") from exc
 
     async def get_models(self) -> List[Dict[str, Any]]:
         """Get list of available models."""
+        if self.breaker and not self.breaker.allow():
+            raise APIError("Circuit breaker open")
         session = await self._ensure_session()
         url = f"{self.base_url}/models"
 
@@ -134,6 +153,8 @@ class AsyncAPIClient:
         if self.cache_enabled and self._cache is not None:
             cached = self._cache.get(cache_key)
             if cached is not None:
+                if self.breaker:
+                    self.breaker.after_call(True)
                 return cached
 
         try:
@@ -143,12 +164,20 @@ class AsyncAPIClient:
                 models = data.get("data", [])
                 if self.cache_enabled and self._cache is not None:
                     self._cache[cache_key] = models
+                if self.breaker:
+                    self.breaker.after_call(True)
                 return models
         except asyncio.TimeoutError as exc:
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError("Request timed out") from exc
         except aiohttp.ClientError as exc:
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError("Failed to get models: network error") from exc
         except Exception as exc:
+            if self.breaker:
+                self.breaker.after_call(False)
             raise APIError(f"Failed to get models: {exc}") from exc
 
     async def health_check(self) -> bool:
