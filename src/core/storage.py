@@ -81,5 +81,5 @@ class SQLiteStorage(StorageInterface):
             return None
         try:
             return json.loads(row[0])
-        except Exception:
-            return row[0]
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to decode JSON for key '{key}': {row[0]}") from e
