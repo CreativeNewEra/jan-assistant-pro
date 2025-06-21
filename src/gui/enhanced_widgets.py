@@ -51,14 +51,15 @@ class ChatInput(tk.Entry):
         self.history = []
         self.history_index = None
 
-        self.bind("<Return>", self._on_submit)
-        self.bind("<Up>", self._on_up)
-        self.bind("<Down>", self._on_down)
-        self.bind("<Control-s>", self._on_save)
-        self.bind("<Control-m>", self._on_memory)
-        self.bind("<Control-z>", self._on_undo)
-        self.bind("<Control-y>", self._on_redo)
-        self.bind("<F1>", self._on_help)
+        self.shortcut_manager = ShortcutManager(self)
+        self.shortcut_manager.register("<Return>", self._on_submit)
+        self.shortcut_manager.register("<Up>", self._on_up)
+        self.shortcut_manager.register("<Down>", self._on_down)
+        self.shortcut_manager.register("<Control-s>", self._on_save)
+        self.shortcut_manager.register("<Control-m>", self._on_memory)
+        self.shortcut_manager.register("<Control-z>", self._on_undo)
+        self.shortcut_manager.register("<Control-y>", self._on_redo)
+        self.shortcut_manager.register("<F1>", self._on_help)
 
     def _on_submit(self, event=None):
         text = self.get().strip()
