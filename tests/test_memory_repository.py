@@ -1,4 +1,3 @@
-import asyncio
 
 from src.core.memory_repository import Memory, MemoryRepository
 from src.core.storage import JSONStorage
