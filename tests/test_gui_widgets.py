@@ -7,7 +7,11 @@ import pytest
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
 )
-from src.gui.enhanced_widgets import ChatInput, StatusBar  # noqa: E402
+from src.gui.enhanced_widgets import (
+    ChatInput,
+    EnhancedChatDisplay,
+    StatusBar,
+)
 
 tk = pytest.importorskip("tkinter", reason="required for GUI widget tests")
 
@@ -58,6 +62,37 @@ class TestChatInput(unittest.TestCase):
         input_widget._on_help()
 
         self.assertEqual(events, ["save", "memory", "undo", "redo", "help"])
+        root.destroy()
+
+    def test_drop_populates_command(self):
+        root = create_root_or_skip()
+        input_widget = ChatInput(root)
+
+        class Event:
+            def __init__(self, data):
+                self.data = data
+
+        input_widget._on_drop(Event("/tmp/test.txt"))
+        self.assertEqual(input_widget.get(), "TOOL_READ_FILE: /tmp/test.txt")
+        root.destroy()
+
+
+class TestEnhancedChatDisplay(unittest.TestCase):
+    def test_drop_calls_callback(self):
+        root = create_root_or_skip()
+        called = []
+
+        def cb(paths):
+            called.append(paths)
+
+        display = EnhancedChatDisplay(root, drop_callback=cb)
+
+        class Event:
+            def __init__(self, data):
+                self.data = data
+
+        display._on_drop(Event("/tmp/foo.txt"))
+        self.assertEqual(called, [["/tmp/foo.txt"]])
         root.destroy()
 
 

@@ -12,6 +12,15 @@ from typing import Any, Dict
 from src.core.app_controller import AppController
 from src.core.config import Config
 from src.core.logging_config import get_logger
+
+try:  # Optional drag-and-drop support
+    from tkinterdnd2 import TkinterDnD
+
+    DND_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    TkinterDnD = None
+    DND_AVAILABLE = False
+
 from src.gui.enhanced_widgets import ChatInput, EnhancedChatDisplay, StatusBar
 from src.gui.help_manager import HelpManager
 
@@ -38,7 +47,10 @@ class JanAssistantGUI:
 
     def setup_gui(self):
         """Create the GUI interface"""
-        self.root = tk.Tk()
+        if DND_AVAILABLE:
+            self.root = TkinterDnD.Tk()
+        else:
+            self.root = tk.Tk()
         self.root.title("🤖 Jan Assistant Pro")
         self.root.geometry(self.config.window_size)
 
@@ -98,6 +110,7 @@ class JanAssistantGUI:
         # Chat display widget
         self.chat_display = EnhancedChatDisplay(
             chat_frame,
+            drop_callback=self.handle_file_drop,
             bg=self.chat_bg_color,
             fg=self.fg_color,
             font=(
@@ -121,6 +134,7 @@ class JanAssistantGUI:
         self.chat_input = ChatInput(
             input_frame,
             send_callback=self.send_message,
+            drop_callback=self.handle_file_drop,
             font=("Arial", 12),
             bg=self.input_bg_color,
             fg=self.fg_color,
@@ -235,6 +249,13 @@ class JanAssistantGUI:
     def add_to_chat(self, sender: str, message: str):
         """Add message to chat display"""
         self.chat_display.add_message(sender, message)
+
+    def handle_file_drop(self, paths):
+        """Insert a TOOL_READ_FILE command when files are dropped."""
+        if paths:
+            self.chat_input.delete(0, tk.END)
+            self.chat_input.insert(0, f"TOOL_READ_FILE: {paths[0]}")
+            self.chat_input.focus_set()
 
     def update_status(
         self, status: str, color: str = "#00ff00", progress: bool = False
