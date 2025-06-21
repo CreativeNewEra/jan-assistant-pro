@@ -287,9 +287,20 @@ class JanAssistantGUI:
     def process_message(self, message: str) -> Dict[str, Any]:
         """Process message with the controller"""
         try:
-            return self.controller.process_message(message)
+            return self.controller.process_message(
+                message, progress_callback=self._progress_callback
+            )
         except Exception as e:
             return {"type": "error", "content": str(e)}
+
+    def _progress_callback(self, current: int, total: int) -> None:
+        """Update progress from worker threads."""
+        self.root.after(
+            0,
+            lambda: self.status_bar.set_status(
+                "Working...", "#00ff00", progress=(current, total)
+            ),
+        )
 
     # GUI Event handlers
     def save_chat(self):

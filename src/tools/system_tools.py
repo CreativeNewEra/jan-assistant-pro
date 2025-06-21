@@ -5,7 +5,7 @@ System command tools for Jan Assistant Pro
 import os
 import platform
 import re
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 from src.core.cache import DiskCache
 from src.core.logging_config import get_logger
@@ -105,12 +105,14 @@ class SystemTools:
 
         return command.strip()
 
-    @validate_input({
-        "command": {
-            "pattern": re.compile(r"^[a-zA-Z0-9\s\-.]+$"),
-            "max_length": 100,
+    @validate_input(
+        {
+            "command": {
+                "pattern": re.compile(r"^[a-zA-Z0-9\s\-.]+$"),
+                "max_length": 100,
+            }
         }
-    })
+    )
     @record_tool("run_command")
     def run_command(
         self,
@@ -389,7 +391,12 @@ class SystemTools:
             }
 
     @record_tool("list_directory")
-    def list_directory(self, path: str = ".") -> Dict[str, Any]:
+    def list_directory(
+        self,
+        path: str = ".",
+        *,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> Dict[str, Any]:
         """List files and directories using the filesystem API."""
         try:
             if not os.path.exists(path):
@@ -397,10 +404,11 @@ class SystemTools:
             if not os.path.isdir(path):
                 return {"success": False, "error": f"'{path}' is not a directory"}
 
-            entries = os.listdir(path)
+            entries = sorted(os.listdir(path))
+            total = len(entries)
             files = []
             directories = []
-            for name in sorted(entries):
+            for idx, name in enumerate(entries, start=1):
                 full_path = os.path.join(path, name)
                 info = {"name": name, "path": full_path}
                 if os.path.isdir(full_path):
@@ -412,6 +420,9 @@ class SystemTools:
                         else None
                     )
                     files.append(info)
+
+                if progress_callback:
+                    progress_callback(idx, total)
 
             return {
                 "success": True,

@@ -71,6 +71,16 @@ class TestStatusBar(unittest.TestCase):
         self.assertEqual(bar.indicator.cget("fg"), "#ff0000")
         root.destroy()
 
+    def test_determinate_progress(self):
+        root = create_root_or_skip()
+        bar = StatusBar(root)
+        bar.set_status("Working", progress=(1, 2))
+        self.assertEqual(bar.progress["mode"], "determinate")
+        self.assertEqual(bar.progress["value"], 1)
+        bar.set_status("Done", progress=(2, 2))
+        self.assertFalse(bar.progress.winfo_ismapped())
+        root.destroy()
+
 
 if __name__ == "__main__":
     unittest.main()

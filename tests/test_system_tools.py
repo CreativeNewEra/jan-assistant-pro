@@ -101,6 +101,20 @@ def test_list_directory(tmp_path):
     assert "d1" in names_dirs
 
 
+def test_list_directory_progress_callback(tmp_path):
+    tools = SystemTools()
+    (tmp_path / "d1").mkdir()
+    (tmp_path / "f1.txt").write_text("x")
+    calls = []
+
+    def progress(current, total):
+        calls.append((current, total))
+
+    tools.list_directory(str(tmp_path), progress_callback=progress)
+    assert calls
+    assert calls[-1][0] == calls[-1][1]
+
+
 def test_list_directory_invalid(tmp_path):
     tools = SystemTools()
     res = tools.list_directory(str(tmp_path / "nope"))

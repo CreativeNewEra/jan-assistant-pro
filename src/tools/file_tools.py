@@ -6,13 +6,12 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List
-
-from src.core.user_friendly_error import UserFriendlyError
+from typing import Any, Callable, Dict, List
 
 from src.core.cache import MEMORY_TTL_CACHE, DiskCache
 from src.core.logging_config import get_logger
 from src.core.metrics import record_tool
+from src.core.user_friendly_error import UserFriendlyError
 
 
 class FileTools:
@@ -32,7 +31,11 @@ class FileTools:
             f"{self.__class__.__module__}.{self.__class__.__name__}",
             {"max_file_size": self.max_file_size},
         )
-        self.disk_cache = DiskCache(disk_cache_dir, default_ttl=disk_cache_ttl) if disk_cache_dir else None
+        self.disk_cache = (
+            DiskCache(disk_cache_dir, default_ttl=disk_cache_ttl)
+            if disk_cache_dir
+            else None
+        )
 
     def clear_disk_cache(self) -> None:
         """Clear the file tool disk cache."""
@@ -417,6 +420,7 @@ class FileTools:
         use_cache: bool = True,
         clear_cache: bool = False,
         ttl: int | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> Dict[str, Any]:
         """
         List files in a directory
@@ -469,7 +473,10 @@ class FileTools:
             files = []
             directories = []
 
-            for item in path.glob(pattern):
+            items = list(path.glob(pattern))
+            total = len(items)
+
+            for idx, item in enumerate(items, start=1):
                 if not include_hidden and item.name.startswith("."):
                     continue
 
@@ -486,6 +493,9 @@ class FileTools:
                     files.append(item_info)
                 elif item.is_dir():
                     directories.append(item_info)
+
+                if progress_callback:
+                    progress_callback(idx, total)
 
             result = {
                 "success": True,
@@ -521,7 +531,12 @@ class FileTools:
 
     @record_tool("copy_file")
     def copy_file(
-        self, source: str, destination: str, overwrite: bool = False
+        self,
+        source: str,
+        destination: str,
+        overwrite: bool = False,
+        *,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> Dict[str, Any]:
         """
         Copy a file
@@ -573,8 +588,20 @@ class FileTools:
             if dest_dir and not os.path.exists(dest_dir):
                 os.makedirs(dest_dir, exist_ok=True)
 
-            # Copy the file
-            shutil.copy2(source, destination)
+            # Copy the file with progress reporting
+            total_size = os.path.getsize(source)
+            bytes_copied = 0
+            with open(source, "rb") as src_f, open(destination, "wb") as dst_f:
+                while True:
+                    chunk = src_f.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    dst_f.write(chunk)
+                    bytes_copied += len(chunk)
+                    if progress_callback:
+                        progress_callback(bytes_copied, total_size)
+
+            shutil.copystat(source, destination)
 
             return {
                 "success": True,
