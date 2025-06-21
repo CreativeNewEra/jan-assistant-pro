@@ -27,3 +27,10 @@ jobs:
         with:
           name: coverage-report
           path: coverage.xml
+      - name: Run benchmarks
+        run: poetry run pytest tests/test_performance.py --benchmark-only --benchmark-json=benchmark.json
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: benchmark.json

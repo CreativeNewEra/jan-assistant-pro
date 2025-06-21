@@ -321,8 +321,8 @@ python -m pytest tests/test_enhanced_features.py -v     # New features
 python -m pytest tests/test_memory_manager.py -v       # Memory system
 python -m pytest tests/test_file_tools.py -v          # File operations
 
-# Run performance tests
-python -m pytest tests/ -k "performance" -v
+# Run performance benchmarks
+python -m pytest tests/test_performance.py --benchmark-only -v
 
 # Generate coverage report
 coverage html  # Creates htmlcov/ directory
