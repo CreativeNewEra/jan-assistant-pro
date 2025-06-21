@@ -64,14 +64,14 @@ class AppConfig:
 
         return config
 
-    @staticmethod
+    @classmethod
     def _get_field_paths(cls, prefix: str = "") -> List[str]:
         paths: List[str] = []
         type_hints = typing.get_type_hints(cls)
         for name, hint in type_hints.items():
             full = f"{prefix}{name}"
             if dataclasses.is_dataclass(hint):
-                paths.extend(AppConfig._get_field_paths(hint, full + "."))
+                paths.extend(cls._get_field_paths(hint, full + "."))
             else:
                 paths.append(full)
         return paths
