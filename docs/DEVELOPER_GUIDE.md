@@ -467,6 +467,19 @@ def expensive_operation():
 Jan Assistant Pro exposes Prometheus metrics for monitoring. Start the metrics
 server and access `/metrics` to collect runtime statistics.
 
+### Health Checks
+
+Use `HealthChecker` to verify core dependencies like the API, memory usage and
+disk space.
+
+```python
+from core import HealthChecker, APIClient
+
+client = APIClient(...)
+checker = HealthChecker(client)
+status = await checker.check_all()
+```
+
 ### Structured Logging
 
 ```python
@@ -478,6 +491,16 @@ logger.info("User action", extra={
         'success': True
     }
 })
+```
+
+You can also create a request context to automatically attach a correlation ID
+and timing information to each log message:
+
+```python
+from core import RequestContext
+
+ctx = RequestContext(logger)
+ctx.log("info", "Processing request")
 ```
 
 ## Error Handling

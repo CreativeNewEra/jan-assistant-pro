@@ -25,7 +25,7 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 ### Enterprise Features ✨ **NEW**
 - 🏗️ **Dynamic Tool Registry**: Hot-loadable tool system with automatic validation
 - 🛡️ **Structured Error Handling**: Rich error context and debugging information
-- 📊 **Advanced Logging**: Production-ready logging with JSON support and audit trails
+ - 📊 **Advanced Logging**: JSON logs with correlation IDs, rotation, and audit trails
 - ✅ **Configuration Validation**: Schema-based config validation with auto-documentation
 - 🧪 **Comprehensive Testing**: Full test suite with high coverage and CI/CD ready
 - 🔧 **Professional Architecture**: Clean MVC separation with extensible design
@@ -33,6 +33,7 @@ A **professional-grade**, local-first AI assistant with enterprise-ready archite
 - 🔒 **Privacy First**: Everything runs locally, your data stays yours
 - ⚙️ **Enterprise Configuration**: Validated JSON configuration with rich schemas
 - 📈 **Prometheus Metrics**: Built-in metrics endpoint for monitoring
+- 🩺 **Health Checks**: Monitor API availability, memory, and disk space
 - ♻️ **Degraded Mode**: Cached tool output shown when the API is unreachable
 
 ## 📸 Screenshots
