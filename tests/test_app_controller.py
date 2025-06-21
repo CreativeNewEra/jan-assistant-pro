@@ -7,20 +7,11 @@ sys.path.insert(
 )
 
 from src.core.app_controller import AppController
-from src.core.config import Config
 from src.core.exceptions import APIError
 
 
-def _create_config(tmp_path):
-    cfg_path = tmp_path / "config.json"
-    cfg_path.write_text(
-        '{"api": {"base_url": "http://test", "api_key": "k", "model": "m"}, "memory": {"file": "mem"}}'
-    )
-    return Config(config_path=str(cfg_path))
-
-
-def test_chat_with_tools_api_error_no_cache(tmp_path):
-    cfg = _create_config(tmp_path)
+def test_chat_with_tools_api_error_no_cache(temp_config):
+    cfg = temp_config
     controller = AppController(cfg)
     with patch.object(
         controller.api_client, "chat_completion", side_effect=APIError("boom")
@@ -29,8 +20,8 @@ def test_chat_with_tools_api_error_no_cache(tmp_path):
     assert "unable to reach" in message.lower()
 
 
-def test_chat_with_tools_api_error_with_cached_result(tmp_path):
-    cfg = _create_config(tmp_path)
+def test_chat_with_tools_api_error_with_cached_result(temp_config):
+    cfg = temp_config
     controller = AppController(cfg)
     controller.last_tool_result = "cached result"
     with patch.object(

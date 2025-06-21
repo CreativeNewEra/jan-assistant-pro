@@ -30,6 +30,7 @@ pytest-asyncio = "^0.23"
 pytest-cov = "^6.2"
 pytest-benchmark = "^4.0"
 hypothesis = "^6.0"
+factory-boy = "^3.3"
 
 [build-system]
 requires = ["poetry-core>=1.9.0"]
