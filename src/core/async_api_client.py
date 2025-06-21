@@ -255,5 +255,9 @@ class AsyncAPIClient:
     async def close(self) -> None:
         """Explicitly close the underlying HTTP session."""
         if self.session and not self.session.closed:
-            await self.session.close()
+            try:
+                await self.session.close()
+            except Exception as exc:
+                # Log the exception (replace with actual logging if available)
+                print(f"Error while closing session: {exc}")
         self.session = None
