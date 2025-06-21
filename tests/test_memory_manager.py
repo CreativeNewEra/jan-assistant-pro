@@ -1,7 +1,11 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
+
+import pytest
 
 from src.core.memory import MemoryManager
 
@@ -70,11 +74,6 @@ def test_memory_get_stats(tmp_path):
         manager.remember("b", "2", category="cat1")
         manager.remember("c", "3", category="cat2")
 
-        ts_a = manager.memory_data["a"]["timestamp"]
-        ts_b = manager.memory_data["b"]["timestamp"]
-        ts_c = manager.memory_data["c"]["timestamp"]
-
-        # Access some entries to update counts
         manager.recall("a")
         manager.recall("a")
         manager.recall("c")
@@ -93,3 +92,15 @@ def test_memory_get_stats(tmp_path):
         assert stats["oldest_entry"] == expected_oldest
         assert stats["newest_entry"] == expected_newest
         assert stats["most_accessed"] == "a"
+
+
+@pytest.mark.parametrize("max_entries,added", [(3, 2), (3, 3), (3, 4)])
+def test_memory_cleanup_max_entries(tmp_path, max_entries, added):
+    path = tmp_path / "mem.json"
+    with MemoryManager(str(path), max_entries=max_entries, auto_save=False) as manager:
+        for i in range(added):
+            manager.remember(f"k{i}", f"v{i}")
+        manager.save_memory()
+        expected_keys = {f"k{i}" for i in range(max(0, added - max_entries), added)}
+        assert set(manager.memory_data.keys()) == expected_keys
+        assert len(manager.memory_data) == min(added, max_entries)
