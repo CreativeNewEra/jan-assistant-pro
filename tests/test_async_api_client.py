@@ -164,7 +164,7 @@ async def test_circuit_breaker_blocks_calls():
                 await client.chat_completion(messages)
             post.assert_not_called()
 
-        time.sleep(1.1)
+        await asyncio.sleep(1.1)
         mock_resp = AsyncMock()
         mock_resp.status = 200
         mock_resp.json = AsyncMock(
