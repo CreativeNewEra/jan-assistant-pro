@@ -12,6 +12,8 @@ Jan Assistant Pro is an AI assistant that operates locally with a set of modular
 - **Plugin System**: Load external tool plugins on the fly
 - **Event Notifications**: Subscribe to configuration and app events
 - **Multi-threading**: GUI remains responsive while operations run in the background
+- **Structured Logging**: Correlation IDs for tracing requests
+- **Health Checks**: Monitor API, memory and disk usage
 
 ### Available Tools
 
