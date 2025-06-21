@@ -6,12 +6,16 @@ import os
 from getpass import getpass
 
 import keyring
+from keyring.errors import KeyringError
 
 from .config import Config
 
 
 class SecureConfig(Config):
     """Configuration that retrieves the API key securely."""
+
+    SERVICE_NAME = "jan-assistant"
+    USERNAME = "api-key"
 
     def _prompt_for_key(self) -> str:
         """Prompt the user for the API key."""
