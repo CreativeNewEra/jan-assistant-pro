@@ -9,6 +9,8 @@ Jan Assistant Pro is an AI assistant that operates locally with a set of modular
 - **Chat Interface**: Hold natural conversations and keep context across messages
 - **Memory System**: Persist information across sessions
 - **Tool Integration**: Easily extend the assistant by adding tools
+- **Plugin System**: Load external tool plugins on the fly
+- **Event Notifications**: Subscribe to configuration and app events
 - **Multi-threading**: GUI remains responsive while operations run in the background
 
 ### Available Tools
@@ -191,7 +193,7 @@ After using a tool, I'll provide the result and you can respond naturally to the
 - Web search integration
 - Calendar/email tools
 - Voice interface
-- Plugin system
+- Plugin system (implemented)
 - Multi-user support
 - Web dashboard
 

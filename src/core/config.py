@@ -7,6 +7,8 @@ import os
 import time
 from typing import Any, Dict
 
+from .event_manager import EventManager
+
 from cachetools import TTLCache
 
 from .logging_config import get_logger
@@ -15,8 +17,9 @@ from .logging_config import get_logger
 class Config:
     """Configuration manager for the application"""
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str = None, event_manager: EventManager | None = None):
         self.config_path = config_path or self._find_config_path()
+        self.event_manager = event_manager
         self.logger = get_logger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
             {"config_path": self.config_path},
@@ -173,6 +176,8 @@ class Config:
 
         # Set the final value
         config[keys[-1]] = value
+        if self.event_manager:
+            self.event_manager.emit("config_changed", key=key_path, value=value)
 
     def save_config(self, config_data: Dict[str, Any] = None):
         """Save configuration to file"""
@@ -182,6 +187,8 @@ class Config:
         try:
             with open(self.config_path, "w") as f:
                 json.dump(data, f, indent=2)
+            if self.event_manager:
+                self.event_manager.emit("config_saved", path=self.config_path)
         except IOError as e:
             self.logger.warning(
                 "Could not save config file",
@@ -194,6 +201,8 @@ class Config:
             self._cache.pop(self.config_path, None)
         self.config_data = self._load_config()
         self._init_cache()
+        if self.event_manager:
+            self.event_manager.emit("config_reloaded", path=self.config_path)
 
     # Convenience properties for common config values
     @property

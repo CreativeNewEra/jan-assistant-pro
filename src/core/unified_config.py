@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 
 from .config_validator import ConfigValidator
 from .logging_config import get_logger
+from .event_manager import EventManager
 
 ENV_PREFIX = "JAN_ASSISTANT_"
 
@@ -26,6 +27,7 @@ class UnifiedConfig:
         config_path: Optional[str] = None,
         env_file: Optional[str] = None,
         schema: Optional[ConfigValidator] = None,
+        event_manager: EventManager | None = None,
     ) -> None:
         if env_file:
             load_dotenv(env_file, override=True)
@@ -40,6 +42,7 @@ class UnifiedConfig:
             {"config_path": self.config_path},
         )
         self.validator = schema or ConfigValidator()
+        self.event_manager = event_manager
         self.config_data: Dict[str, Any] = {}
         self._cache: TTLCache | None = None
         self._last_load: float = 0.0
@@ -134,6 +137,8 @@ class UnifiedConfig:
             self._cache.pop(self.config_path, None)
         self.config_data = self._load_config()
         self._init_cache()
+        if self.event_manager:
+            self.event_manager.emit("config_reloaded", path=self.config_path)
 
     def _load_config(self) -> Dict[str, Any]:
         if self._cache is not None:
@@ -221,6 +226,8 @@ class UnifiedConfig:
     def set(self, key_path: str, value: Any) -> None:
         self._check_reload()
         self._set_nested_value(self.config_data, key_path, value)
+        if self.event_manager:
+            self.event_manager.emit("config_changed", key=key_path, value=value)
 
     def save_config(self, config_data: Optional[Dict[str, Any]] = None) -> None:
         data = config_data or self.config_data
@@ -233,6 +240,8 @@ class UnifiedConfig:
             if os.path.exists(self.config_path):
                 shutil.copy2(self.config_path, backup_path)
             os.replace(tmp_path, self.config_path)
+            if self.event_manager:
+                self.event_manager.emit("config_saved", path=self.config_path)
         except OSError as e:
             self.logger.warning(
                 "Could not save config file",
@@ -247,6 +256,8 @@ class UnifiedConfig:
         if os.path.exists(backup_path):
             shutil.copy2(backup_path, self.config_path)
             self.reload()
+            if self.event_manager:
+                self.event_manager.emit("config_restored", path=self.config_path)
             return True
         return False
 
