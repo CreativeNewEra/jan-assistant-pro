@@ -37,7 +37,7 @@ autodoc_typehints = "description"
 mermaid_output_format = "svg"
 
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns = ['_build', 'generated']
 
 
 
