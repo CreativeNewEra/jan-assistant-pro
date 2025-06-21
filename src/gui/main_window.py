@@ -41,13 +41,18 @@ class JanAssistantGUI:
         self.root.title("🤖 Jan Assistant Pro")
         self.root.geometry(self.config.window_size)
         # Keyboard shortcuts
-        self.root.bind("<Control-s>", lambda e: self.save_chat())
-        self.root.bind("<Control-m>", lambda e: self.view_memory())
-        self.root.bind("<Control-z>", lambda e: self.undo_action())
-        self.root.bind("<Control-y>", lambda e: self.redo_action())
-        self.root.bind("<F1>", lambda e: self.show_help())
+        # Map direct keyboard shortcuts to virtual events
+        shortcut_to_event = {
+            "<Control-s>": "<<SaveChat>>",
+            "<Control-m>": "<<ViewMemory>>",
+            "<Control-z>": "<<UndoAction>>",
+            "<Control-y>": "<<RedoAction>>",
+            "<F1>": "<<ShowHelp>>",
+        }
+        for shortcut, event in shortcut_to_event.items():
+            self.root.bind(shortcut, lambda e, event=event: self.root.event_generate(event))
 
-        # Virtual events from ChatInput
+        # Bind virtual events to action methods
         self.root.bind("<<SaveChat>>", lambda e: self.save_chat())
         self.root.bind("<<ViewMemory>>", lambda e: self.view_memory())
         self.root.bind("<<UndoAction>>", lambda e: self.undo_action())
