@@ -1,8 +1,22 @@
-.PHONY: install test lint format clean run test-coverage test-watch format-check security run-debug build pre-commit-install pre-commit-run
+.PHONY: install test lint format clean run test-coverage test-watch format-check security run-debug build pre-commit-install pre-commit-run install-wizard quick-install system-check start
 
-# Development setup
+# Installation and setup
 install:
         poetry install --with dev
+
+install-wizard:
+        python install_wizard.py
+
+quick-install:
+        python install_wizard.py --quick
+
+system-check:
+        python setup/system_check.py
+
+# Development setup
+dev-setup: install
+        pre-commit install
+        python install_wizard.py --dev --quick
 
 # Testing
 test:
@@ -39,10 +53,13 @@ clean:
 
 # Run application
 run:
-	python main.py
+        python main.py
+
+start:
+        ./start.sh
 
 run-debug:
-	JAN_ASSISTANT_DEBUG=true JAN_ASSISTANT_LOG_LEVEL=DEBUG python main.py
+        JAN_ASSISTANT_DEBUG=true JAN_ASSISTANT_LOG_LEVEL=DEBUG python main.py
 
 # Build distribution
 build:

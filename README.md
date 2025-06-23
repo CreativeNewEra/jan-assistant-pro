@@ -65,32 +65,57 @@ undo or redo, and `F1` for contextual help.
 
 ## 🛠️ Installation
 
-### Quick Start
+### 🚀 One-Click Installation ✨ **NEW**
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/CreativeNewEra/jan-assistant-pro.git
-   cd jan-assistant-pro
-   ```
+The easiest way to get started with Jan Assistant Pro:
 
-2. **Install dependencies**:
-   ```bash
-   poetry install
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/CreativeNewEra/jan-assistant-pro.git
+cd jan-assistant-pro
 
-3. **Configure your API settings**:
-   ```bash
- cp config/config.example.json config/config.json
- # Edit config.json with your API details
- ```
-  You can also set the API key via the `JAN_API_KEY` environment variable. When
-  using `SecureConfig`, the key is saved to your system keyring after the first
-  prompt.
+# Run the advanced installer wizard
+python install_wizard.py
+```
 
-4. **Run the application**:
-   ```bash
-   python main.py
-   ```
+The installer will:
+- ✅ Check system requirements and install missing dependencies
+- 🌐 Auto-detect local AI services (Jan.ai, Ollama, LM Studio, etc.)
+- ⚙️ Guide you through API provider configuration (OpenAI, Anthropic, local services)
+- 🔒 Configure security settings and permissions  
+- 💾 Generate optimized configuration files
+- 🚀 Create smart launcher script for easy startup
+
+### 🚀 One-Click Startup
+
+After installation, start the application with pre-flight checks:
+
+```bash
+# Smart launcher with environment validation
+./start.sh
+
+# Or using Make
+make start
+```
+
+### Quick Installation Options
+
+```bash
+# Interactive setup with full wizard
+python install_wizard.py
+
+# Quick setup with auto-detection
+python install_wizard.py --quick
+
+# Development setup with dev dependencies  
+python install_wizard.py --dev
+
+# Manual setup (traditional method)
+poetry install
+cp config/config.example.json config/config.json
+# Edit config.json with your API details
+python main.py
+```
 
 ### Development Installation
 
@@ -191,10 +216,21 @@ API becomes available.
 
 ### First Steps
 
-1. **Start Jan.ai** and load your model
-2. **Run Jan Assistant Pro**: `python main.py`
-3. **Test the connection**: Click "🔧 Test API" button
-4. **Try basic commands**:
+1. **Clone and install**:
+   ```bash
+   git clone https://github.com/CreativeNewEra/jan-assistant-pro.git
+   cd jan-assistant-pro
+   python install_wizard.py
+   ```
+
+2. **Start the application**:
+   ```bash
+   ./start.sh
+   ```
+
+3. **If using Jan.ai**: Start Jan.ai and load your model first
+4. **Test the connection**: Click "🔧 Test API" button  
+5. **Try basic commands**:
 
 ### Example Commands
 
@@ -228,6 +264,8 @@ get current directory
 ```
 jan-assistant-pro/
 ├── main.py                          # Application entry point
+├── install_wizard.py               # ✨ NEW: Advanced installer with wizard
+├── start.sh                        # ✨ NEW: Smart launcher script
 ├── src/
 │   ├── core/                        # Core application logic
 │   │   ├── app_controller.py        # ✨ NEW: Application controller (MVC)
@@ -245,6 +283,11 @@ jan-assistant-pro/
 │       ├── tool_registry.py         # ✨ NEW: Dynamic registry
 │       ├── file_tools.py            # File operations
 │       └── system_tools.py          # System commands
+├── setup/                           # ✨ NEW: Installer modules
+│   ├── system_check.py             # ✨ NEW: System validation
+│   ├── dependency_manager.py       # ✨ NEW: Dependency handling
+│   ├── api_providers.py            # ✨ NEW: API provider management
+│   └── config_wizard.py            # ✨ NEW: Interactive configuration
 ├── tests/                           # ✨ NEW: Comprehensive test suite
 │   ├── test_enhanced_features.py    # ✨ NEW: Integration tests
 │   ├── test_api_client.py          # API client tests
@@ -256,7 +299,8 @@ jan-assistant-pro/
 │   └── config.json                 # User configuration
 └── docs/                           # Documentation
     ├── REFACTORING_SUMMARY.md      # ✨ NEW: Architecture changes
-    └── HIGH_IMPACT_IMPROVEMENTS_SUMMARY.md  # ✨ NEW: Enhancement guide
+    ├── HIGH_IMPACT_IMPROVEMENTS_SUMMARY.md  # ✨ NEW: Enhancement guide
+    └── INSTALLER_README.md         # ✨ NEW: Installation guide
 ```
 
 ### Enterprise Components
